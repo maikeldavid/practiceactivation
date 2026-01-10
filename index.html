@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ITERA HEALTH | A Connected Ecosystem for Value-Based Care</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      html {
+        scroll-behavior: smooth;
+      }
+      @keyframes fade-in-up {
+        from { opacity: 0; transform: translateY(20px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      .animate-fade-in-up {
+        animation: fade-in-up 0.3s ease-out forwards;
+      }
+      @keyframes slide-in-up {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+      }
+      .animate-slide-in-up {
+        animation: slide-in-up 0.3s ease-out;
+      }
+      @keyframes pulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4); }
+          50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(0, 123, 255, 0); }
+      }
+      .ecosystem-animation-container .node-item,
+      .ecosystem-animation-container .flow-arrow {
+          animation: fade-in-up 0.8s ease-out forwards;
+      }
+      .ecosystem-animation-container .platform-node {
+          animation: fade-in-up 0.8s ease-out forwards;
+      }
+       .ecosystem-animation-container .platform-node > div {
+          animation: pulse 2.5s infinite 1.5s;
+      }
+
+      /* Animation for Hero Background */
+      @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0px); }
+      }
+      /* Animation for connection lines */
+      @keyframes draw-line {
+        from { stroke-dashoffset: 1000; }
+        to { stroke-dashoffset: 0; }
+      }
+      .connection-line {
+        stroke-dasharray: 1000;
+        animation: draw-line 0.8s ease-out forwards;
+        opacity: 0.6;
+      }
+      /* Chatbot Proactive Animation */
+      @keyframes pulse-chat {
+        0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.7);
+        }
+        70% {
+          transform: scale(1.1);
+          box-shadow: 0 0 0 15px rgba(0, 123, 255, 0);
+        }
+      }
+      .animate-pulse-chat {
+        animation: pulse-chat 2s infinite;
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              'itera-blue': {
+                light: '#E6F2FB',
+                DEFAULT: '#007BFF', // A more vibrant blue for CTAs
+                dark: '#0A3D91',
+              },
+              'itera-orange': {
+                DEFAULT: '#F97316',
+                dark: '#C2410C',
+              },
+            },
+          },
+        },
+      };
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-white font-sans">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
