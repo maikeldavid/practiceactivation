@@ -35,28 +35,42 @@ const App: React.FC = () => {
   const handleCloseActivationModal = () => {
     setActivationModalOpen(false);
   };
-  
+
   const handleActivationSuccess = (data: { name: string; email: string; practiceName: string; }) => {
-      setPracticeInfo(data);
-      setActivationModalOpen(false);
-      setPortalOpen(true);
+    setPracticeInfo(data);
+    setActivationModalOpen(false);
+    setPortalOpen(true);
   };
-  
+
   const handleClosePortal = () => {
     setPortalOpen(false);
     // Reset practiceInfo after a delay for the animation to complete
     setTimeout(() => {
-        setPracticeInfo(null);
-        setSelectedProgramsForModal([]);
+      setPracticeInfo(null);
+      setSelectedProgramsForModal([]);
     }, 300);
   }
 
+  const handleScrollToActivation = () => {
+    const targetElement = document.getElementById('activation');
+    if (targetElement) {
+      const headerElement = document.querySelector('header');
+      const headerOffset = headerElement ? headerElement.offsetHeight : 72;
+      const elementPosition = targetElement.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.scrollY - headerOffset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth',
+      });
+    }
+  };
 
   return (
     <div className="bg-white text-gray-800">
-      <Header onStartActivation={() => handleOpenActivationModal([])} />
+      <Header onStartActivation={handleScrollToActivation} />
       <main>
-        <HeroSection onStartActivation={() => handleOpenActivationModal([])} />
+        <HeroSection onStartActivation={handleScrollToActivation} />
         <AnimatedEcosystemSection />
         <WhyValueBasedCareSection />
         <EcosystemSection />
@@ -76,11 +90,11 @@ const App: React.FC = () => {
       />
       {practiceInfo && (
         <ActivationPortal
-            isOpen={isPortalOpen}
-            onClose={handleClosePortal}
-            practiceInfo={practiceInfo}
-            selectedPrograms={selectedProgramsForModal}
-            patients={MOCK_PATIENTS}
+          isOpen={isPortalOpen}
+          onClose={handleClosePortal}
+          practiceInfo={practiceInfo}
+          selectedPrograms={selectedProgramsForModal}
+          patients={MOCK_PATIENTS}
         />
       )}
     </div>
