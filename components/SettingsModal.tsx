@@ -7,7 +7,15 @@ interface SettingsModalProps {
     currentUser: { name: string; email: string; practiceName: string };
 }
 
-type SettingsTab = 'users' | 'roles' | 'general';
+type SettingsTab = 'users' | 'roles' | 'crm' | 'general';
+
+interface ZohoAssignmentRule {
+    id: string;
+    field: 'NPI' | 'Practice Name' | 'Zip Code' | 'Always';
+    operator: 'equals' | 'contains' | 'starts with';
+    value: string;
+    assignTo: string;
+}
 
 interface User {
     id: string;
@@ -39,6 +47,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, currentU
         { id: '4', name: 'Physician', permissions: ['View Patients', 'Edit Care Plans', 'View Reports'], userCount: 0 },
         { id: '5', name: 'Care Coordinator', permissions: ['View Patients', 'Edit Care Plans'], userCount: 0 }
     ]);
+
+    const [assignmentRules, setAssignmentRules] = useState<ZohoAssignmentRule[]>([
+        { id: '1', field: 'Always', operator: 'equals', value: '*', assignTo: 'Maikel (Default)' },
+        { id: '2', field: 'Zip Code', operator: 'starts with', value: '33', assignTo: 'Florida Sales Team' }
+    ]);
+
+    const [enableCustomRules, setEnableCustomRules] = useState(true);
 
     if (!isOpen) return null;
 
@@ -82,6 +97,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, currentU
                             >
                                 <UsersIcon className="w-5 h-5" />
                                 Roles & Permissions
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('crm')}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${activeTab === 'crm'
+                                    ? 'bg-itera-blue text-white'
+                                    : 'text-gray-700 hover:bg-gray-200'
+                                    }`}
+                            >
+                                <Settings className="w-5 h-5" />
+                                Zoho CRM
                             </button>
                             <button
                                 onClick={() => setActiveTab('general')}
@@ -161,42 +186,123 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, currentU
                             </div>
                         )}
 
-                        {activeTab === 'roles' && (
-                            <div>
+                        {activeTab === 'crm' && (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="flex items-center justify-between mb-6">
                                     <div>
-                                        <h3 className="text-2xl font-bold text-gray-900">Roles & Permissions</h3>
-                                        <p className="text-gray-600 mt-1">Define access levels and permissions</p>
+                                        <h3 className="text-2xl font-bold text-gray-900">Zoho CRM Assignment</h3>
+                                        <p className="text-gray-600 mt-1">Configure how practice records are assigned to Zoho users</p>
                                     </div>
-                                    <button className="flex items-center gap-2 bg-itera-blue text-white px-4 py-2 rounded-lg hover:bg-itera-blue-dark transition-colors font-medium">
-                                        <span>+</span>
-                                        Create Role
-                                    </button>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-sm font-medium text-gray-500">Enable Rules</span>
+                                        <button
+                                            onClick={() => setEnableCustomRules(!enableCustomRules)}
+                                            className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${enableCustomRules ? 'bg-itera-blue' : 'bg-gray-300'}`}
+                                        >
+                                            <div className={`w-4 h-4 bg-white rounded-full transition-transform duration-200 ${enableCustomRules ? 'translate-x-6' : 'translate-x-0'}`} />
+                                        </button>
+                                    </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {roles.map((role) => (
-                                        <div key={role.id} className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
-                                            <div className="flex items-start justify-between mb-4">
-                                                <div>
-                                                    <h4 className="text-lg font-bold text-gray-900">{role.name}</h4>
-                                                    <p className="text-sm text-gray-500 mt-1">{role.userCount} user{role.userCount !== 1 ? 's' : ''}</p>
-                                                </div>
-                                                <UsersIcon className="w-6 h-6 text-itera-blue" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <p className="text-sm font-medium text-gray-700">Permissions:</p>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {role.permissions.map((permission, idx) => (
-                                                        <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-                                                            {permission}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
+                                <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-8">
+                                    <div className="flex gap-4">
+                                        <div className="p-3 bg-white rounded-lg shadow-sm">
+                                            <UsersIcon className="w-6 h-6 text-itera-blue" />
                                         </div>
-                                    ))}
+                                        <div>
+                                            <h4 className="font-bold text-itera-blue-dark">Current Logic</h4>
+                                            <p className="text-sm text-blue-800/80 mt-1">
+                                                {enableCustomRules
+                                                    ? "Records are assigned based on the conditional rules below. If no rule matches, the Default Owner is used."
+                                                    : "All records are currently assigned to the primary account owner (Maikel)."}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
+
+                                {enableCustomRules && (
+                                    <div className="space-y-6">
+                                        <div className="flex justify-between items-center">
+                                            <h4 className="font-bold text-gray-800">Assignment Rules</h4>
+                                            <button
+                                                onClick={() => {
+                                                    const newRule: ZohoAssignmentRule = {
+                                                        id: Date.now().toString(),
+                                                        field: 'NPI',
+                                                        operator: 'equals',
+                                                        value: '',
+                                                        assignTo: 'Select User...'
+                                                    };
+                                                    setAssignmentRules([...assignmentRules, newRule]);
+                                                }}
+                                                className="text-itera-blue hover:text-itera-blue-dark font-medium text-sm flex items-center gap-1"
+                                            >
+                                                <span>+</span> Add New Rule
+                                            </button>
+                                        </div>
+
+                                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                                            <table className="w-full">
+                                                <thead className="bg-gray-50 border-b border-gray-200">
+                                                    <tr>
+                                                        <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Criteria (Field)</th>
+                                                        <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Operator</th>
+                                                        <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Value</th>
+                                                        <th className="text-left px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider">Assign To</th>
+                                                        <th className="text-right px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-wider"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-100">
+                                                    {assignmentRules.map((rule) => (
+                                                        <tr key={rule.id} className="hover:bg-gray-50/50 transition-colors">
+                                                            <td className="px-6 py-4">
+                                                                <select className="bg-transparent border-none text-sm font-medium text-gray-900 focus:ring-0 cursor-pointer">
+                                                                    <option>{rule.field}</option>
+                                                                    <option>NPI</option>
+                                                                    <option>Practice Name</option>
+                                                                    <option>Zip Code</option>
+                                                                    <option>Always</option>
+                                                                </select>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <select className="bg-transparent border-none text-sm text-gray-600 focus:ring-0 cursor-pointer">
+                                                                    <option>{rule.operator}</option>
+                                                                    <option>equals</option>
+                                                                    <option>contains</option>
+                                                                    <option>starts with</option>
+                                                                </select>
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <input
+                                                                    type="text"
+                                                                    defaultValue={rule.value}
+                                                                    className="bg-gray-50 border border-gray-200 rounded px-3 py-1 text-sm focus:ring-1 focus:ring-itera-blue w-full"
+                                                                />
+                                                            </td>
+                                                            <td className="px-6 py-4">
+                                                                <select className="bg-transparent border-none text-sm font-bold text-itera-blue focus:ring-0 cursor-pointer">
+                                                                    <option>{rule.assignTo}</option>
+                                                                    <option>Maikel (Admin)</option>
+                                                                    <option>Florida Sales Team</option>
+                                                                    <option>New User A</option>
+                                                                    <option>New User B</option>
+                                                                </select>
+                                                            </td>
+                                                            <td className="px-6 py-4 text-right">
+                                                                <button
+                                                                    onClick={() => setAssignmentRules(assignmentRules.filter(r => r.id !== rule.id))}
+                                                                    className="text-gray-300 hover:text-red-500 transition-colors"
+                                                                >
+                                                                    <Trash2Icon className="w-4 h-4" />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
