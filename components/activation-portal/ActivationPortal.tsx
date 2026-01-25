@@ -86,7 +86,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         const errorData = await response.json();
         console.error('Zoho Sync Error:', errorData);
         // Show alert to user so they can report the error EXACTLY
-        alert(`ZOho Sync Error: ${errorData.message}`);
+        alert(`Zoho Sync Error: ${errorData.message || errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Failed to sync with Zoho:', error);
