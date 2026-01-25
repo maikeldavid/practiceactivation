@@ -54,7 +54,9 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
     // Debounced Auto-save Effect
     React.useEffect(() => {
         const timer = setTimeout(() => {
-            if (isFormValid) {
+            // Only auto-save if something has changed and basic requirements are met
+            const basicValid = practiceData.name && physician.name && physician.npi;
+            if (basicValid) {
                 handleAutoSave();
             }
         }, 2000); // 2 second debounce
@@ -82,19 +84,46 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
 
-        if (!practiceData.name.trim()) newErrors.practiceName = 'Practice name is required';
+        // Helper regex
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+        const npiRegex = /^\d{10}$/;
 
+        // 1. Practice Info
+        if (!practiceData.name.trim()) newErrors.practiceName = 'Practice name is required';
+        if (practiceData.orgNPI && !npiRegex.test(practiceData.orgNPI.replace(/\D/g, ''))) {
+            newErrors.orgNPI = 'Organization NPI must be exactly 10 digits';
+        }
+        if (practiceData.website.trim() && !practiceData.website.startsWith('http')) {
+            newErrors.website = 'Website must start with http:// or https://';
+        }
+
+        // 2. Locations
         locations.forEach((loc, index) => {
             if (!loc.name.trim()) newErrors[`location_${index}_name`] = 'Location name is required';
             if (!loc.address.trim()) newErrors[`location_${index}_address`] = 'Address is required';
-            if (!loc.phone.trim()) newErrors[`location_${index}_phone`] = 'Phone is required';
+            if (!loc.phone.trim()) {
+                newErrors[`location_${index}_phone`] = 'Phone is required';
+            } else if (!phoneRegex.test(loc.phone)) {
+                newErrors[`location_${index}_phone`] = 'Invalid phone format (e.g., (555) 000-0000)';
+            }
+            if (loc.email.trim() && !emailRegex.test(loc.email)) {
+                newErrors[`location_${index}_email`] = 'Invalid email format';
+            }
         });
 
+        // 3. Physician
         if (!physician.name.trim()) newErrors.physicianName = 'Physician name is required';
         if (!physician.npi.trim()) {
             newErrors.physicianNPI = 'Physician NPI is required';
-        } else if (!/^\d{10}$/.test(physician.npi.replace(/\s/g, ''))) {
-            newErrors.physicianNPI = 'NPI must be 10 digits';
+        } else if (!npiRegex.test(physician.npi.replace(/\D/g, ''))) {
+            newErrors.physicianNPI = 'NPI must be exactly 10 digits';
+        }
+        if (physician.email.trim() && !emailRegex.test(physician.email)) {
+            newErrors.physicianEmail = 'Invalid email format';
+        }
+        if (physician.phone.trim() && !phoneRegex.test(physician.phone)) {
+            newErrors.physicianPhone = 'Invalid phone format';
         }
 
         setErrors(newErrors);
@@ -217,6 +246,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                 className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue ${errors.practiceName ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                                 placeholder="e.g., Amavita Health Group"
                             />
+                            {errors.practiceName && <p className="text-xs text-red-500 mt-1 font-bold">{errors.practiceName}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">Organization NPI (Type 2)</label>
@@ -224,10 +254,11 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                 type="text"
                                 value={practiceData.orgNPI}
                                 onChange={(e) => setPracticeData({ ...practiceData, orgNPI: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue ${errors.orgNPI ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                                 placeholder="10-digit Org NPI"
                                 maxLength={10}
                             />
+                            {errors.orgNPI && <p className="text-xs text-red-500 mt-1 font-bold">{errors.orgNPI}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">Practice Website (Optional)</label>
@@ -235,9 +266,10 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                 type="text"
                                 value={practiceData.website}
                                 onChange={(e) => setPracticeData({ ...practiceData, website: e.target.value })}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue ${errors.website ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                                 placeholder="https://www.example.com"
                             />
+                            {errors.website && <p className="text-xs text-red-500 mt-1 font-bold">{errors.website}</p>}
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -300,9 +332,10 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                             type="text"
                                             value={loc.name}
                                             onChange={(e) => updateLocation(idx, 'name', e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-itera-blue ${errors[`location_${idx}_name`] ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                                             placeholder="e.g., Downtown Office"
                                         />
+                                        {errors[`location_${idx}_name`] && <p className="text-[10px] text-red-500 mt-0.5 font-bold uppercase">{errors[`location_${idx}_name`]}</p>}
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office Phone *</label>
@@ -310,9 +343,10 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                             type="tel"
                                             value={loc.phone}
                                             onChange={(e) => updateLocation(idx, 'phone', e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-itera-blue ${errors[`location_${idx}_phone`] ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                                             placeholder="(555) 000-0000"
                                         />
+                                        {errors[`location_${idx}_phone`] && <p className="text-[10px] text-red-500 mt-0.5 font-bold uppercase">{errors[`location_${idx}_phone`]}</p>}
                                     </div>
                                     <div className="md:col-span-2">
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office Email (Optional)</label>
@@ -320,9 +354,10 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                             type="email"
                                             value={loc.email}
                                             onChange={(e) => updateLocation(idx, 'email', e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-itera-blue ${errors[`location_${idx}_email`] ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                                             placeholder="office@example.com"
                                         />
+                                        {errors[`location_${idx}_email`] && <p className="text-[10px] text-red-500 mt-0.5 font-bold uppercase">{errors[`location_${idx}_email`]}</p>}
                                     </div>
                                     <div className="md:col-span-6">
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office Address *</label>
@@ -330,9 +365,10 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                             type="text"
                                             value={loc.address}
                                             onChange={(e) => updateLocation(idx, 'address', e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
+                                            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-itera-blue ${errors[`location_${idx}_address`] ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                                             placeholder="Street, City, State, ZIP"
                                         />
+                                        {errors[`location_${idx}_address`] && <p className="text-[10px] text-red-500 mt-0.5 font-bold uppercase">{errors[`location_${idx}_address`]}</p>}
                                     </div>
                                 </div>
                             </div>
@@ -353,9 +389,10 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                 type="text"
                                 value={physician.name}
                                 onChange={(e) => setPhysician({ ...physician, name: e.target.value })}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue ${errors.physicianName ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                                 placeholder="Dr. Jane Doe"
                             />
+                            {errors.physicianName && <p className="text-xs text-red-500 mt-1 font-bold">{errors.physicianName}</p>}
                         </div>
                         <div className="md:col-span-1">
                             <label className="block text-sm font-bold text-gray-700 mb-2">Individual NPI (Type 1) *</label>
@@ -367,6 +404,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                 placeholder="10-digit Individual NPI"
                                 maxLength={10}
                             />
+                            {errors.physicianNPI && <p className="text-xs text-red-500 mt-1 font-bold">{errors.physicianNPI}</p>}
                         </div>
                         <div className="md:col-span-1">
                             <label className="block text-sm font-bold text-gray-700 mb-2">Physician Email (Optional)</label>
@@ -374,9 +412,10 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                 type="email"
                                 value={physician.email}
                                 onChange={(e) => setPhysician({ ...physician, email: e.target.value })}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue ${errors.physicianEmail ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                                 placeholder="physician@example.com"
                             />
+                            {errors.physicianEmail && <p className="text-xs text-red-500 mt-1 font-bold">{errors.physicianEmail}</p>}
                         </div>
                         <div className="md:col-span-1">
                             <label className="block text-sm font-bold text-gray-700 mb-2">Physician Phone (Optional)</label>
@@ -384,9 +423,10 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                 type="tel"
                                 value={physician.phone}
                                 onChange={(e) => setPhysician({ ...physician, phone: e.target.value })}
-                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue ${errors.physicianPhone ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                                 placeholder="(555) 000-0000"
                             />
+                            {errors.physicianPhone && <p className="text-xs text-red-500 mt-1 font-bold">{errors.physicianPhone}</p>}
                         </div>
                     </div>
 
