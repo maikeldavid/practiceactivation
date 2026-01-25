@@ -30,6 +30,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         name: initialData?.physician?.name || '',
         npi: initialData?.physician?.npi || '',
         email: initialData?.physician?.email || '',
+        phone: initialData?.physician?.phone || '',
         officeAssignments: initialData?.physician?.officeAssignments || []
     });
 
@@ -247,7 +248,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                         <Trash2Icon className="w-5 h-5" />
                                     </button>
                                 )}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                                     <div className="md:col-span-2">
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Location Name *</label>
                                         <input
@@ -259,16 +260,6 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                         />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office Address *</label>
-                                        <input
-                                            type="text"
-                                            value={loc.address}
-                                            onChange={(e) => updateLocation(idx, 'address', e.target.value)}
-                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
-                                            placeholder="Street, City, State, ZIP"
-                                        />
-                                    </div>
-                                    <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office Phone *</label>
                                         <input
                                             type="tel"
@@ -278,7 +269,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                             placeholder="(555) 000-0000"
                                         />
                                     </div>
-                                    <div>
+                                    <div className="md:col-span-2">
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office Email (Optional)</label>
                                         <input
                                             type="email"
@@ -286,6 +277,16 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                             onChange={(e) => updateLocation(idx, 'email', e.target.value)}
                                             className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
                                             placeholder="office@example.com"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-6">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office Address *</label>
+                                        <input
+                                            type="text"
+                                            value={loc.address}
+                                            onChange={(e) => updateLocation(idx, 'address', e.target.value)}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
+                                            placeholder="Street, City, State, ZIP"
                                         />
                                     </div>
                                 </div>
@@ -300,7 +301,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                         <span className="p-2 bg-blue-50 rounded-lg"><UsersIcon className="w-5 h-5 text-itera-blue" /></span>
                         Principal Physician (Individual)
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         <div className="md:col-span-1">
                             <label className="block text-sm font-bold text-gray-700 mb-2">Physician Full Name *</label>
                             <input
@@ -330,6 +331,16 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                 onChange={(e) => setPhysician({ ...physician, email: e.target.value })}
                                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
                                 placeholder="physician@example.com"
+                            />
+                        </div>
+                        <div className="md:col-span-1">
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Physician Phone (Optional)</label>
+                            <input
+                                type="tel"
+                                value={physician.phone}
+                                onChange={(e) => setPhysician({ ...physician, phone: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                placeholder="(555) 000-0000"
                             />
                         </div>
                     </div>
@@ -441,8 +452,8 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                         type="button"
                                         onClick={() => toggleMemberAssignment(loc.id)}
                                         className={`px-3 py-1.5 rounded-lg border-2 text-xs font-bold transition-all ${newMember.officeAssignments.includes(loc.id)
-                                                ? 'bg-itera-blue border-itera-blue text-white'
-                                                : 'bg-white border-gray-100 text-gray-400 hover:border-itera-blue/30'
+                                            ? 'bg-itera-blue border-itera-blue text-white'
+                                            : 'bg-white border-gray-100 text-gray-400 hover:border-itera-blue/30'
                                             }`}
                                     >
                                         {loc.name}

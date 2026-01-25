@@ -5,6 +5,7 @@ interface UserProfileViewProps {
     initialData: {
         name: string;
         email: string;
+        role: string;
     };
     onSave: (data: { name: string; email: string }) => void;
     onCancel?: () => void;
@@ -75,6 +76,20 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ initialData, onSave, 
                             placeholder="your.email@example.com"
                         />
                         {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                            <CheckCircleIcon className="w-4 h-4 text-itera-blue" />
+                            Account Role
+                        </label>
+                        <input
+                            type="text"
+                            value={initialData.role}
+                            readOnly
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-500 cursor-not-allowed transition-all"
+                        />
+                        <p className="mt-1 text-xs text-gray-400">Your role is managed by your organization administrator.</p>
                     </div>
                 </div>
 

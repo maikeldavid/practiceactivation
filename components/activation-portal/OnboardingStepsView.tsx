@@ -186,7 +186,7 @@ const OnboardingStepsView: React.FC<OnboardingStepsViewProps> = ({ roles, traini
                       className="flex items-center gap-2 bg-white text-itera-blue-dark border border-itera-blue/20 font-bold py-2.5 px-5 rounded-xl shadow-sm hover:bg-itera-blue-light/30 transition-all group"
                     >
                       <Settings className="w-5 h-5 text-itera-blue group-hover:rotate-45 transition-transform" />
-                      {isProviderProfileComplete ? 'Update Provider Profile' : 'Complete Provider Profile'}
+                      {isProviderProfileComplete ? 'Update Health System Profile' : 'Complete Health System Profile'}
                     </button>
                     {isProviderProfileComplete && (
                       <p className="text-xs text-green-600 font-medium flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">

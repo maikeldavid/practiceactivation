@@ -141,6 +141,7 @@ export interface PrincipalPhysician {
   name: string;
   npi: string;
   email?: string;
+  phone?: string;
   officeAssignments: string[]; // IDs of PracticeLocations
 }
 

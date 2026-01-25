@@ -46,7 +46,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
   const [documentsSignedStatus, setDocumentsSignedStatus] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState({ name: practiceInfo.name, email: practiceInfo.email });
+  const [userProfile, setUserProfile] = useState({ name: practiceInfo.name, email: practiceInfo.email, role: practiceInfo.role });
   const [notifications] = useState([
     { id: '1', message: 'New patient enrollment pending approval', time: '5 min ago', read: false },
     { id: '2', message: 'Team member John Doe added to care team', time: '1 hour ago', read: false },
@@ -62,13 +62,14 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
 
   if (!isOpen) return null;
 
-  const syncWithZoho = async (extraData: any = {}) => {
+  const syncWithZoho = async (extraData: any = {}, profileOverride?: PracticeProfile) => {
     if (isSyncing) return;
 
     try {
       setIsSyncing(true);
-      const physicianEmail = providerProfile?.physician.email || practiceInfo.email;
-      const physicianName = providerProfile?.physician.name || practiceInfo.name;
+      const activeProfile = profileOverride || providerProfile;
+      const physicianEmail = activeProfile?.physician.email || practiceInfo.email;
+      const physicianName = activeProfile?.physician.name || practiceInfo.name;
 
       const currentStep = completedSteps.size > 0 ? Math.max(...Array.from(completedSteps) as number[]) : 0;
       const statusText = currentStep > 0 ? `Step ${currentStep} Completed` : 'Initiated';
@@ -78,20 +79,20 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          practiceName: providerProfile?.name || practiceInfo.practiceName,
+          practiceName: activeProfile?.name || practiceInfo.practiceName,
           providerName: physicianName,
           providerEmail: physicianEmail,
-          phone: providerProfile?.locations[0]?.phone,
-          address: providerProfile?.locations[0]?.address,
-          npi: providerProfile?.physician.npi,
-          website: providerProfile?.website,
-          medicarePotential: providerProfile?.medicarePotential,
-          otherPotential: providerProfile?.otherPotential,
+          phone: activeProfile?.physician.phone || activeProfile?.locations[0]?.phone,
+          address: activeProfile?.locations[0]?.address,
+          npi: activeProfile?.physician.npi,
+          website: activeProfile?.website,
+          medicarePotential: activeProfile?.medicarePotential,
+          otherPotential: activeProfile?.otherPotential,
           internalId: practiceInfo.email,
           status: statusText,
           assignmentRules: enableCustomRules ? assignmentRules : [],
           // Add nested metadata for future backend use
-          healthcareData: providerProfile,
+          healthcareData: activeProfile,
           ...extraData
         })
       });
@@ -289,14 +290,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
               setCompletedSteps(prev => {
                 const next = new Set(prev).add(1);
                 syncWithZoho({
-                  status: 'Step 1 Completed (Provider Profile)',
-                  phone: data.providerPhone,
-                  address: data.providerAddress,
-                  npi: data.providerNPI,
-                  website: data.providerURL,
-                  medicarePotential: data.medicareFFSPatients,
-                  otherPotential: data.otherPatients
-                });
+                  status: 'Step 1 Completed (Health System Profile)'
+                }, data);
                 return next;
               });
               // Redirect to onboarding to continue with next steps
@@ -459,7 +454,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         <Settings className="w-4 h-4" />
-                        Practice Profile
+                        Health System Profile
                       </button>
                       <div className="border-t border-gray-100"></div>
                       <button

@@ -214,7 +214,7 @@ export const BENEFITS: Benefit[] = [
 export const TIMELINE_STEPS: TimelineStep[] = [
   {
     step: 1,
-    title: 'Provider Profile',
+    title: 'Health System Profile',
     shortDescription: "Complete your provider information including NPI and care team members.",
     icon: UserCheckIcon,
     details: {
