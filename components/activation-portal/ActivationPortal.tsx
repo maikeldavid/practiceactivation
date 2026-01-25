@@ -16,10 +16,11 @@ import OutreachWorkspaceView from './OutreachWorkspaceView';
 import DocumentsView from './DocumentsView';
 import ProviderProfileView from './ProviderProfileView';
 import DocumentSigningView from './DocumentSigningView';
-import type { EHRConfig, TrainingMeeting, ZohoAssignmentRule } from '../../types';
+import UserProfileView from './UserProfileView';
+import type { EHRConfig, TrainingMeeting, ZohoAssignmentRule, PracticeProfile } from '../../types';
 
 
-type View = 'dashboard' | 'onboarding' | 'patients' | 'analytics' | 'documents' | 'team' | 'ehr' | 'training' | 'outreach' | 'provider-profile' | 'document-signing';
+type View = 'dashboard' | 'onboarding' | 'patients' | 'analytics' | 'documents' | 'team' | 'ehr' | 'training' | 'outreach' | 'provider-profile' | 'document-signing' | 'user-profile';
 
 interface ActivationPortalProps {
   isOpen: boolean;
@@ -41,20 +42,11 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
   const [trainingMeeting, setTrainingMeeting] = useState<TrainingMeeting | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [patientList, setPatientList] = useState(patients);
-  const [providerProfile, setProviderProfile] = useState<{
-    providerName: string;
-    providerAddress: string;
-    providerPhone: string;
-    providerEmail: string;
-    providerNPI: string;
-    providerURL?: string;
-    medicareFFSPatients?: string;
-    otherPatients?: string;
-    careTeamMembers: { id: string; name: string; role: string; email: string }[];
-  } | null>(null);
+  const [providerProfile, setProviderProfile] = useState<PracticeProfile | null>(null);
   const [documentsSignedStatus, setDocumentsSignedStatus] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState({ name: practiceInfo.name, email: practiceInfo.email });
   const [notifications] = useState([
     { id: '1', message: 'New patient enrollment pending approval', time: '5 min ago', read: false },
     { id: '2', message: 'Team member John Doe added to care team', time: '1 hour ago', read: false },
@@ -75,8 +67,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
 
     try {
       setIsSyncing(true);
-      const providerEmail = providerProfile?.providerEmail || practiceInfo.email;
-      const providerName = providerProfile?.providerName || practiceInfo.name;
+      const physicianEmail = providerProfile?.physician.email || practiceInfo.email;
+      const physicianName = providerProfile?.physician.name || practiceInfo.name;
 
       const currentStep = completedSteps.size > 0 ? Math.max(...Array.from(completedSteps) as number[]) : 0;
       const statusText = currentStep > 0 ? `Step ${currentStep} Completed` : 'Initiated';
@@ -86,18 +78,20 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          practiceName: practiceInfo.practiceName,
-          providerName: providerName,
-          providerEmail: providerEmail,
-          phone: providerProfile?.providerPhone,
-          address: providerProfile?.providerAddress,
-          npi: providerProfile?.providerNPI,
-          website: providerProfile?.providerURL,
-          medicarePotential: providerProfile?.medicareFFSPatients,
-          otherPotential: providerProfile?.otherPatients,
+          practiceName: providerProfile?.name || practiceInfo.practiceName,
+          providerName: physicianName,
+          providerEmail: physicianEmail,
+          phone: providerProfile?.locations[0]?.phone,
+          address: providerProfile?.locations[0]?.address,
+          npi: providerProfile?.physician.npi,
+          website: providerProfile?.website,
+          medicarePotential: providerProfile?.medicarePotential,
+          otherPotential: providerProfile?.otherPotential,
           internalId: practiceInfo.email,
           status: statusText,
           assignmentRules: enableCustomRules ? assignmentRules : [],
+          // Add nested metadata for future backend use
+          healthcareData: providerProfile,
           ...extraData
         })
       });
@@ -327,6 +321,17 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             }}
           />
         );
+      case 'user-profile':
+        return (
+          <UserProfileView
+            initialData={userProfile}
+            onSave={(data) => {
+              setUserProfile(data);
+              setActiveView('onboarding');
+            }}
+            onCancel={() => setActiveView('onboarding')}
+          />
+        );
       default:
         return <DashboardView patients={patientList} />;
     }
@@ -427,7 +432,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
                       {practiceInfo.name.split(' ').map(n => n[0]).join('')}
                     </div>
                     <div className="text-left hidden md:block">
-                      <p className="text-sm font-semibold text-gray-800">{practiceInfo.name}</p>
+                      <p className="text-sm font-semibold text-gray-800">{userProfile.name}</p>
                       <p className="text-xs text-gray-500">{practiceInfo.role}</p>
                     </div>
                     <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -445,6 +450,16 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
                       >
                         <UserIcon className="w-4 h-4" />
                         My Profile
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveView('provider-profile');
+                          setUserMenuOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <Settings className="w-4 h-4" />
+                        Practice Profile
                       </button>
                       <div className="border-t border-gray-100"></div>
                       <button

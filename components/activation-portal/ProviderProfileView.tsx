@@ -1,89 +1,62 @@
 import React, { useState } from 'react';
-import { CheckCircleIcon, HomeIcon, MapPinIcon, MailIcon, UsersIcon, Trash2Icon, GlobeIcon } from '../IconComponents';
-
-interface CareTeamMember {
-    id: string;
-    name: string;
-    role: string;
-    email: string;
-}
+import { CheckCircleIcon, HomeIcon, MapPinIcon, MailIcon, UsersIcon, Trash2Icon, GlobeIcon, PlusIcon } from '../IconComponents';
+import type { PracticeProfile, PracticeLocation, ContactInfo } from '../../types';
 
 interface ProviderProfileViewProps {
-    initialData?: {
-        providerName: string;
-        providerAddress: string;
-        providerPhone: string;
-        providerEmail: string;
-        providerNPI: string;
-        providerURL?: string;
-        medicareFFSPatients?: string;
-        otherPatients?: string;
-        careTeamMembers: CareTeamMember[];
-    };
-    onSave: (data: {
-        providerName: string;
-        providerAddress: string;
-        providerPhone: string;
-        providerEmail: string;
-        providerNPI: string;
-        providerURL?: string;
-        medicareFFSPatients?: string;
-        otherPatients?: string;
-        careTeamMembers: CareTeamMember[];
-    }) => void;
+    initialData?: Partial<PracticeProfile>;
+    onSave: (data: PracticeProfile) => void;
     onCancel?: () => void;
 }
 
 const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, onSave, onCancel }) => {
-    const [formData, setFormData] = useState({
-        providerName: initialData?.providerName || '',
-        providerAddress: initialData?.providerAddress || '',
-        providerPhone: initialData?.providerPhone || '',
-        providerEmail: initialData?.providerEmail || '',
-        providerNPI: initialData?.providerNPI || '',
-        providerURL: initialData?.providerURL || '',
-        medicareFFSPatients: initialData?.medicareFFSPatients || '',
-        otherPatients: initialData?.otherPatients || ''
+    // Practice State
+    const [practiceData, setPracticeData] = useState({
+        name: initialData?.name || '',
+        website: initialData?.website || '',
+        orgNPI: initialData?.orgNPI || '',
+        medicarePotential: initialData?.medicarePotential || '',
+        otherPotential: initialData?.otherPotential || ''
     });
 
-    const [careTeamMembers, setCareTeamMembers] = useState<CareTeamMember[]>(
+    // Locations State
+    const [locations, setLocations] = useState<PracticeLocation[]>(
+        initialData?.locations || [
+            { id: '1', name: '', address: '', phone: '', email: '' }
+        ]
+    );
+
+    // Physician State
+    const [physician, setPhysician] = useState({
+        name: initialData?.physician?.name || '',
+        npi: initialData?.physician?.npi || '',
+        email: initialData?.physician?.email || '',
+        officeAssignments: initialData?.physician?.officeAssignments || []
+    });
+
+    // Care Team State
+    const [careTeamMembers, setCareTeamMembers] = useState<ContactInfo[]>(
         initialData?.careTeamMembers || []
     );
 
-    const [newMember, setNewMember] = useState({ name: '', role: '', email: '' });
+    const [newMember, setNewMember] = useState({ name: '', role: '', email: '', phone: '', title: '' });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
 
-        if (!formData.providerName.trim()) {
-            newErrors.providerName = 'Provider name is required';
-        }
+        if (!practiceData.name.trim()) newErrors.practiceName = 'Practice name is required';
 
-        if (!formData.providerAddress.trim()) {
-            newErrors.providerAddress = 'Provider address is required';
-        }
+        locations.forEach((loc, index) => {
+            if (!loc.name.trim()) newErrors[`location_${index}_name`] = 'Location name is required';
+            if (!loc.address.trim()) newErrors[`location_${index}_address`] = 'Address is required';
+            if (!loc.phone.trim()) newErrors[`location_${index}_phone`] = 'Phone is required';
+        });
 
-        if (!formData.providerPhone.trim()) {
-            newErrors.providerPhone = 'Provider phone is required';
-        } else if (!/^[\d\s\-\(\)\+]{7,20}$/.test(formData.providerPhone)) {
-            newErrors.providerPhone = 'Please enter a valid phone number';
-        }
-
-        if (!formData.providerEmail.trim()) {
-            newErrors.providerEmail = 'Provider email is required';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.providerEmail)) {
-            newErrors.providerEmail = 'Please enter a valid email address';
-        }
-
-        if (!formData.providerNPI.trim()) {
-            newErrors.providerNPI = 'Provider NPI is required';
-        } else if (!/^\d{10}$/.test(formData.providerNPI.replace(/\s/g, ''))) {
-            newErrors.providerNPI = 'NPI must be 10 digits';
-        }
-
-        if (formData.providerURL.trim() && !/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/.test(formData.providerURL)) {
-            newErrors.providerURL = 'Please enter a valid URL';
+        if (!physician.name.trim()) newErrors.physicianName = 'Physician name is required';
+        if (!physician.npi.trim()) {
+            newErrors.physicianNPI = 'Physician NPI is required';
+        } else if (!/^\d{10}$/.test(physician.npi.replace(/\s/g, ''))) {
+            newErrors.physicianNPI = 'NPI must be 10 digits';
         }
 
         setErrors(newErrors);
@@ -94,212 +67,279 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         e.preventDefault();
         if (validateForm()) {
             onSave({
-                ...formData,
+                ...practiceData,
+                locations,
+                physician,
                 careTeamMembers
             });
         }
     };
 
-    const handleChange = (field: string, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-        if (errors[field]) {
-            setErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[field];
-                return newErrors;
-            });
+    const addLocation = () => {
+        const newLoc: PracticeLocation = {
+            id: Date.now().toString(),
+            name: '',
+            address: '',
+            phone: '',
+            email: ''
+        };
+        setLocations([...locations, newLoc]);
+    };
+
+    const removeLocation = (id: string) => {
+        if (locations.length > 1) {
+            setLocations(locations.filter(l => l.id !== id));
+            setPhysician(prev => ({
+                ...prev,
+                officeAssignments: prev.officeAssignments.filter(locId => locId !== id)
+            }));
         }
+    };
+
+    const updateLocation = (index: number, field: keyof PracticeLocation, value: string) => {
+        const newLocations = [...locations];
+        newLocations[index] = { ...newLocations[index], [field]: value };
+        setLocations(newLocations);
+    };
+
+    const toggleAssignment = (locationId: string) => {
+        setPhysician(prev => ({
+            ...prev,
+            officeAssignments: prev.officeAssignments.includes(locationId)
+                ? prev.officeAssignments.filter(id => id !== locationId)
+                : [...prev.officeAssignments, locationId]
+        }));
     };
 
     const handleAddMember = () => {
         if (newMember.name && newMember.role && newMember.email) {
-            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newMember.email)) {
-                alert('Please enter a valid email address');
-                return;
-            }
-
-            const member: CareTeamMember = {
+            const member: ContactInfo = {
                 id: Date.now().toString(),
                 ...newMember
             };
             setCareTeamMembers(prev => [...prev, member]);
-            setNewMember({ name: '', role: '', email: '' });
+            setNewMember({ name: '', role: '', email: '', phone: '', title: '' });
         }
     };
 
-    const handleRemoveMember = (id: string) => {
-        setCareTeamMembers(prev => prev.filter(m => m.id !== id));
-    };
-
-    const isFormValid = formData.providerName && formData.providerAddress && formData.providerPhone && formData.providerEmail && formData.providerNPI;
+    const isFormValid = practiceData.name && physician.name && physician.npi && locations[0].address;
 
     return (
-        <div className="space-y-8 animate-fade-in-up">
+        <div className="space-y-8 animate-fade-in-up pb-20">
             <div>
-                <h2 className="text-3xl font-bold text-itera-blue-dark mb-2">Provider Profile</h2>
-                <p className="text-gray-600">Complete your provider information to continue with the onboarding process</p>
+                <h2 className="text-3xl font-bold text-itera-blue-dark mb-2">Health System Profile</h2>
+                <p className="text-gray-600">Structure your practice, locations, and providers to align with healthcare industry standards.</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-8">
-                {/* Provider Information Section */}
-                <div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-gray-200">Provider Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
-                        {/* Provider Name */}
-                        <div className="md:col-span-3">
-                            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                <HomeIcon className="w-4 h-4 text-itera-blue" />
-                                Provider Name *
-                            </label>
+            <form onSubmit={handleSubmit} className="space-y-8">
+                {/* 1. Practice Information */}
+                <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                    <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 pb-3 border-b border-gray-100">
+                        <span className="p-2 bg-blue-50 rounded-lg"><HomeIcon className="w-5 h-5 text-itera-blue" /></span>
+                        Practice Information (Organization)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Practice Name *</label>
                             <input
                                 type="text"
-                                value={formData.providerName}
-                                onChange={(e) => handleChange('providerName', e.target.value)}
-                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all ${errors.providerName ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                    }`}
-                                placeholder="Enter provider or practice name"
+                                value={practiceData.name}
+                                onChange={(e) => setPracticeData({ ...practiceData, name: e.target.value })}
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue ${errors.practiceName ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                                placeholder="e.g., Amavita Health Group"
                             />
-                            {errors.providerName && (
-                                <p className="mt-1 text-sm text-red-600">{errors.providerName}</p>
-                            )}
                         </div>
-
-                        {/* Provider Address */}
-                        <div className="md:col-span-3">
-                            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                <MapPinIcon className="w-4 h-4 text-itera-blue" />
-                                Provider Address *
-                            </label>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Organization NPI (Type 2)</label>
                             <input
                                 type="text"
-                                value={formData.providerAddress}
-                                onChange={(e) => handleChange('providerAddress', e.target.value)}
-                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all ${errors.providerAddress ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                    }`}
-                                placeholder="Enter full address (street, city, state, zip)"
-                            />
-                            {errors.providerAddress && (
-                                <p className="mt-1 text-sm text-red-600">{errors.providerAddress}</p>
-                            )}
-                        </div>
-
-                        {/* Provider Phone */}
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                <span className="text-itera-blue">📞</span>
-                                Provider Telephone *
-                            </label>
-                            <input
-                                type="tel"
-                                value={formData.providerPhone}
-                                onChange={(e) => handleChange('providerPhone', e.target.value)}
-                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all ${errors.providerPhone ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                    }`}
-                                placeholder="(555) 123-4567"
-                            />
-                            {errors.providerPhone && (
-                                <p className="mt-1 text-sm text-red-600">{errors.providerPhone}</p>
-                            )}
-                        </div>
-
-                        {/* Provider Email */}
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                <MailIcon className="w-4 h-4 text-itera-blue" />
-                                Email *
-                            </label>
-                            <input
-                                type="email"
-                                value={formData.providerEmail}
-                                onChange={(e) => handleChange('providerEmail', e.target.value)}
-                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all ${errors.providerEmail ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                    }`}
-                                placeholder="provider@example.com"
-                            />
-                            {errors.providerEmail && (
-                                <p className="mt-1 text-sm text-red-600">{errors.providerEmail}</p>
-                            )}
-                        </div>
-
-                        {/* Provider NPI */}
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                <span className="text-itera-blue">🏥</span>
-                                Provider NPI *
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.providerNPI}
-                                onChange={(e) => handleChange('providerNPI', e.target.value.replace(/\D/g, '').slice(0, 10))}
-                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all ${errors.providerNPI ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                    }`}
-                                placeholder="1234567890"
+                                value={practiceData.orgNPI}
+                                onChange={(e) => setPracticeData({ ...practiceData, orgNPI: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                placeholder="10-digit Org NPI"
                                 maxLength={10}
                             />
-                            {errors.providerNPI && (
-                                <p className="mt-1 text-sm text-red-600">{errors.providerNPI}</p>
-                            )}
                         </div>
-
-                        {/* Provider URL */}
-                        <div className="md:col-span-2">
-                            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                <GlobeIcon className="w-4 h-4 text-itera-blue" />
-                                Website URL (Optional)
-                            </label>
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Practice Website (Optional)</label>
                             <input
                                 type="text"
-                                value={formData.providerURL}
-                                onChange={(e) => handleChange('providerURL', e.target.value)}
-                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all ${errors.providerURL ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                                    }`}
-                                placeholder="https://example.com"
+                                value={practiceData.website}
+                                onChange={(e) => setPracticeData({ ...practiceData, website: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                placeholder="https://www.example.com"
                             />
-                            {errors.providerURL && (
-                                <p className="mt-1 text-sm text-red-600">{errors.providerURL}</p>
-                            )}
                         </div>
-
-                        {/* Patient Potential Section */}
-                        <div className="md:col-span-4 grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                    <UsersIcon className="w-4 h-4 text-itera-blue" />
-                                    Medicare FFS Patients
-                                </label>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Medicare FFS Patients</label>
                                 <input
                                     type="number"
-                                    value={formData.medicareFFSPatients}
-                                    onChange={(e) => handleChange('medicareFFSPatients', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all"
-                                    placeholder="e.g. 500"
+                                    value={practiceData.medicarePotential}
+                                    onChange={(e) => setPracticeData({ ...practiceData, medicarePotential: e.target.value })}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                    placeholder="Qty"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                                    <UsersIcon className="w-4 h-4 text-itera-blue" />
-                                    Other Patients
-                                </label>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Other Patients</label>
                                 <input
                                     type="number"
-                                    value={formData.otherPatients}
-                                    onChange={(e) => handleChange('otherPatients', e.target.value)}
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all"
-                                    placeholder="e.g. 1000"
+                                    value={practiceData.otherPotential}
+                                    onChange={(e) => setPracticeData({ ...practiceData, otherPotential: e.target.value })}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                    placeholder="Qty"
                                 />
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {/* 2. Practice Locations */}
+                <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                    <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                        <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <span className="p-2 bg-blue-50 rounded-lg"><MapPinIcon className="w-5 h-5 text-itera-blue" /></span>
+                            Practice Locations (Offices)
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={addLocation}
+                            className="flex items-center gap-2 text-itera-blue hover:text-itera-blue-dark font-bold text-sm"
+                        >
+                            <PlusIcon className="w-4 h-4" />
+                            Add Location
+                        </button>
+                    </div>
+
+                    <div className="space-y-6">
+                        {locations.map((loc, idx) => (
+                            <div key={loc.id} className="p-6 bg-gray-50 rounded-2xl border border-gray-200 relative group">
+                                {locations.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeLocation(loc.id)}
+                                        className="absolute top-4 right-4 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                    >
+                                        <Trash2Icon className="w-5 h-5" />
+                                    </button>
+                                )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Location Name *</label>
+                                        <input
+                                            type="text"
+                                            value={loc.name}
+                                            onChange={(e) => updateLocation(idx, 'name', e.target.value)}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
+                                            placeholder="e.g., Downtown Office"
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office Address *</label>
+                                        <input
+                                            type="text"
+                                            value={loc.address}
+                                            onChange={(e) => updateLocation(idx, 'address', e.target.value)}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
+                                            placeholder="Street, City, State, ZIP"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office Phone *</label>
+                                        <input
+                                            type="tel"
+                                            value={loc.phone}
+                                            onChange={(e) => updateLocation(idx, 'phone', e.target.value)}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
+                                            placeholder="(555) 000-0000"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Office Email (Optional)</label>
+                                        <input
+                                            type="email"
+                                            value={loc.email}
+                                            onChange={(e) => updateLocation(idx, 'email', e.target.value)}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
+                                            placeholder="office@example.com"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* 3. Principal Physician */}
+                <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                    <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2 pb-3 border-b border-gray-100">
+                        <span className="p-2 bg-blue-50 rounded-lg"><UsersIcon className="w-5 h-5 text-itera-blue" /></span>
+                        Principal Physician (Individual)
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="md:col-span-1">
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Physician Full Name *</label>
+                            <input
+                                type="text"
+                                value={physician.name}
+                                onChange={(e) => setPhysician({ ...physician, name: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                placeholder="Dr. Jane Doe"
+                            />
+                        </div>
+                        <div className="md:col-span-1">
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Individual NPI (Type 1) *</label>
+                            <input
+                                type="text"
+                                value={physician.npi}
+                                onChange={(e) => setPhysician({ ...physician, npi: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue ${errors.physicianNPI ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+                                placeholder="10-digit Individual NPI"
+                                maxLength={10}
+                            />
+                        </div>
+                        <div className="md:col-span-1">
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Physician Email (Optional)</label>
+                            <input
+                                type="email"
+                                value={physician.email}
+                                onChange={(e) => setPhysician({ ...physician, email: e.target.value })}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue"
+                                placeholder="physician@example.com"
+                            />
+                        </div>
+                    </div>
+
+                    {/* 4. Assign Physician to Locations */}
+                    <div className="pt-4">
+                        <label className="block text-sm font-bold text-gray-700 mb-3 text-itera-blue">Assign Physician to Locations:</label>
+                        <div className="flex flex-wrap gap-3">
+                            {locations.map(loc => loc.name && (
+                                <button
+                                    key={loc.id}
+                                    type="button"
+                                    onClick={() => toggleAssignment(loc.id)}
+                                    className={`px-4 py-2 rounded-full border-2 text-sm font-bold transition-all ${physician.officeAssignments.includes(loc.id)
+                                            ? 'bg-itera-blue border-itera-blue text-white shadow-md'
+                                            : 'bg-white border-gray-200 text-gray-600 hover:border-itera-blue hover:text-itera-blue'
+                                        }`}
+                                >
+                                    {loc.name}
+                                    {physician.officeAssignments.includes(loc.id) && ' ✓'}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
                 {/* Care Team Section */}
-                <div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-gray-200 flex items-center gap-2">
+                <div className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b border-gray-100 flex items-center gap-2">
                         <UsersIcon className="w-5 h-5 text-itera-blue" />
                         Care Team Members (Optional)
                     </h3>
 
-                    {/* Existing Members */}
                     {careTeamMembers.length > 0 && (
                         <div className="mb-6 space-y-3">
                             {careTeamMembers.map((member) => (
@@ -310,7 +350,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                     </div>
                                     <button
                                         type="button"
-                                        onClick={() => handleRemoveMember(member.id)}
+                                        onClick={() => setCareTeamMembers(careTeamMembers.filter(m => m.id !== member.id))}
                                         className="text-red-500 hover:text-red-700 transition-colors p-2"
                                     >
                                         <Trash2Icon className="w-5 h-5" />
@@ -320,7 +360,6 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                         </div>
                     )}
 
-                    {/* Add New Member Form */}
                     <div className="bg-blue-50/50 p-6 rounded-xl border border-blue-100">
                         <p className="text-sm font-bold text-gray-700 mb-4">Add Care Team Member</p>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -328,21 +367,21 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                 type="text"
                                 value={newMember.name}
                                 onChange={(e) => setNewMember(prev => ({ ...prev, name: e.target.value }))}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-itera-blue focus:border-transparent"
+                                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
                                 placeholder="Full Name"
                             />
                             <input
                                 type="text"
                                 value={newMember.role}
                                 onChange={(e) => setNewMember(prev => ({ ...prev, role: e.target.value }))}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-itera-blue focus:border-transparent"
-                                placeholder="Role (e.g., Care Coordinator)"
+                                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
+                                placeholder="Role (e.g., Coordinator)"
                             />
                             <input
                                 type="email"
                                 value={newMember.email}
                                 onChange={(e) => setNewMember(prev => ({ ...prev, email: e.target.value }))}
-                                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-itera-blue focus:border-transparent"
+                                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
                                 placeholder="Email"
                             />
                         </div>
@@ -350,30 +389,20 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                             type="button"
                             onClick={handleAddMember}
                             disabled={!newMember.name || !newMember.role || !newMember.email}
-                            className="mt-4 flex items-center gap-2 px-4 py-2 bg-itera-blue text-white font-bold rounded-lg hover:bg-itera-blue-dark transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                            className="mt-4 flex items-center gap-2 px-6 py-2 bg-itera-blue text-white font-bold rounded-lg hover:bg-itera-blue-dark transition-colors disabled:bg-gray-300"
                         >
-                            <span className="text-xl">+</span>
-                            Add Member
+                            + Add Member
                         </button>
                     </div>
                 </div>
 
-                {/* Info Box */}
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
-                    <CheckCircleIcon className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                    <div className="text-sm text-blue-800">
-                        <p className="font-bold mb-1">Why do we need this information?</p>
-                        <p>This information will be used in your legal documents (BAA and Service Agreement) and for official communications. Your care team members will receive notifications and updates about patient care coordination.</p>
-                    </div>
-                </div>
-
                 {/* Action Buttons */}
-                <div className="flex justify-end gap-4 pt-4 border-t border-gray-200">
+                <div className="flex justify-end gap-4 pt-4 sticky bottom-8 bg-gray-50/80 backdrop-blur-sm p-4 rounded-2xl">
                     {onCancel && (
                         <button
                             type="button"
                             onClick={onCancel}
-                            className="px-6 py-3 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
+                            className="px-6 py-3 border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-white transition-colors"
                         >
                             Cancel
                         </button>
@@ -381,9 +410,9 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                     <button
                         type="submit"
                         disabled={!isFormValid}
-                        className="px-8 py-3 bg-itera-blue text-white font-bold rounded-xl shadow-lg hover:bg-itera-blue-dark transition-all transform hover:-translate-y-0.5 disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none"
+                        className="px-12 py-3 bg-itera-blue text-white font-bold rounded-xl shadow-lg hover:bg-itera-blue-dark transition-all transform hover:-translate-y-0.5 disabled:bg-gray-300 disabled:transform-none"
                     >
-                        Save & Continue
+                        Save Health System Profile
                     </button>
                 </div>
             </form>

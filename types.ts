@@ -127,3 +127,29 @@ export interface ZohoAssignmentRule {
   value: string;
   assignTo: string;
 }
+
+export interface PracticeLocation {
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  email?: string;
+}
+
+export interface PrincipalPhysician {
+  name: string;
+  npi: string;
+  email?: string;
+  officeAssignments: string[]; // IDs of PracticeLocations
+}
+
+export interface PracticeProfile {
+  name: string;
+  website?: string;
+  orgNPI?: string; // Type 2 NPI
+  medicarePotential?: string;
+  otherPotential?: string;
+  locations: PracticeLocation[];
+  physician: PrincipalPhysician;
+  careTeamMembers: ContactInfo[];
+}

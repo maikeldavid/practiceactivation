@@ -2,7 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { TIMELINE_STEPS } from '../../constants';
 import { CheckCircleIcon, Settings, DatabaseIcon, CalendarClockIcon } from '../IconComponents';
-import { ContactInfo, TrainingMeeting } from '../../types';
+import { ContactInfo, TrainingMeeting, PracticeProfile } from '../../types';
 
 interface OnboardingStepsViewProps {
   roles: ContactInfo[];
@@ -10,7 +10,7 @@ interface OnboardingStepsViewProps {
   completedSteps: Set<number>;
   setCompletedSteps: React.Dispatch<React.SetStateAction<Set<number>>>;
   onNavigate: (view: any) => void;
-  providerProfile: { providerName: string; providerAddress: string; providerPhone: string; providerEmail: string } | null;
+  providerProfile: PracticeProfile | null;
   documentsSignedStatus: boolean;
 }
 
@@ -25,7 +25,13 @@ const OnboardingStepsView: React.FC<OnboardingStepsViewProps> = ({ roles, traini
   };
 
   const isTeamConfigured = roles.every(isRoleConfigured);
-  const isProviderProfileComplete = !!(providerProfile?.providerName && providerProfile?.providerAddress && providerProfile?.providerPhone && providerProfile?.providerEmail);
+  const isProviderProfileComplete = !!(
+    providerProfile?.name &&
+    providerProfile?.physician.name &&
+    providerProfile?.physician.npi &&
+    providerProfile?.locations.length > 0 &&
+    providerProfile?.locations[0].address
+  );
 
   const activeStepData = useMemo(() => {
     return TIMELINE_STEPS.find(step => step.step === activeStep);
@@ -185,7 +191,7 @@ const OnboardingStepsView: React.FC<OnboardingStepsViewProps> = ({ roles, traini
                     {isProviderProfileComplete && (
                       <p className="text-xs text-green-600 font-medium flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
                         <CheckCircleIcon className="w-4 h-4" />
-                        Profile completed for {providerProfile?.providerName}
+                        Profile completed for {providerProfile?.physician.name}
                       </p>
                     )}
                   </div>
