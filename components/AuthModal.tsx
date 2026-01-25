@@ -14,6 +14,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initi
         name: '',
         email: '',
         password: '',
+        confirmPassword: '',
         practiceName: '',
     });
 
@@ -51,6 +52,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initi
             }
         } else {
             // Signup mode - create new user as Practice Staff
+            if (formData.password !== formData.confirmPassword) {
+                alert('Passwords do not match. Please try again.');
+                return;
+            }
+
             onSuccess({
                 name: formData.name || 'Demo User',
                 email: formData.email,
@@ -189,6 +195,28 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initi
                                 />
                             </div>
                         </div>
+
+                        {mode === 'signup' && (
+                            <div className="space-y-1.5 pb-2">
+                                <div className="flex justify-between items-center px-1">
+                                    <label className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Confirm Password</label>
+                                </div>
+                                <div className="relative">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                                        <ShieldCheckIcon className="w-4 h-4" />
+                                    </div>
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        required
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                        placeholder="••••••••"
+                                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-2xl text-sm focus:bg-white focus:ring-2 focus:ring-itera-blue focus:border-itera-blue outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         <button
                             type="submit"
