@@ -51,22 +51,32 @@ export interface ChatMessage {
   feedback?: 'like' | 'dislike' | null;
 }
 
-export type PatientStatus = 'Pending Approval' | 'Approved' | 'Outreach - 1st Attempt' | 'Outreach - 2nd Attempt' | 'Consent Sent' | 'Device Shipped' | 'Active' | 'Not Enrolled';
+export type PatientStatus = 'Pending Approval' | 'Approved' | 'Outreach - 1st Attempt' | 'Outreach - 2nd Attempt' | 'Consent Sent' | 'Device Shipped' | 'Active' | 'Not Approved';
 
 export interface MockPatient {
   id: number;
   name: string;
   dob: string;
+  gender?: 'male' | 'female';
+  zipCode?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  medications?: string[];
   eligiblePrograms: string[];
   status: PatientStatus;
   // New operational fields for the dashboard
   insurance?: 'UHC' | 'Aetna' | 'Cigna' | 'Humana' | 'Other';
+  chronicConditions?: string[];
   careManager?: 'Ana Smith' | 'John Doe' | 'Emily White' | 'Michael Brown';
   callAttemptDate?: string; // ISO string
   contactedDate?: string; // ISO string
   appointmentDate?: string; // ISO string
   enrollmentDate?: string; // ISO string
   enrolledPrograms?: ('CCM' | 'RPM')[];
+  lastCallOutcome?: string;
+  lastCallNotes?: string;
+  nextCallDate?: string; // ISO string
 }
 
 export interface Document {
@@ -87,3 +97,26 @@ export interface Folder {
 }
 
 export type DocumentItem = Document | Folder;
+
+export interface ContactInfo {
+  id: string;
+  title: string;
+  description?: string;
+  name: string;
+  email: string;
+  phone: string;
+  isCustom?: boolean;
+}
+export interface EHRConfig {
+  ehrSystem: string;
+  username: string;
+  password?: string;
+  lastConnected?: string;
+}
+
+export interface TrainingMeeting {
+  date: string;
+  time: string;
+  link?: string;
+  status: 'scheduled' | 'pending';
+}

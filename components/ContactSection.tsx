@@ -1,9 +1,29 @@
 
 import React, { useState } from 'react';
 import { PhoneCall, CalendarIcon } from './IconComponents';
+import MeetingScheduleModal from './MeetingScheduleModal';
+import EmailContactModal from './EmailContactModal';
 
-const ContactSection: React.FC = () => {
+interface ContactSectionProps {
+  isAuthenticated?: boolean;
+  onAuthRequest?: (mode: 'login' | 'signup') => void;
+  currentUser?: { name: string; email: string; } | null;
+}
+
+const ContactSection: React.FC<ContactSectionProps> = ({ isAuthenticated, onAuthRequest, currentUser }) => {
   const [selectedDuration, setSelectedDuration] = useState<number>(30);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+
+  const handleMessageClick = () => {
+    if (isAuthenticated) {
+      setIsEmailModalOpen(true);
+    } else {
+      if (onAuthRequest) {
+        onAuthRequest('login');
+      }
+    }
+  };
 
   return (
     <section id="contact" className="py-20 bg-itera-blue-dark">
@@ -25,19 +45,19 @@ const ContactSection: React.FC = () => {
             </div>
             <h3 className="text-2xl font-bold text-white mb-2">Contact Support</h3>
             <p className="text-blue-200 mb-6 flex-grow">Reach our team for immediate assistance.</p>
-            
+
             <div className="text-left space-y-3 mb-8 text-blue-100">
-                <p><strong>Phone:</strong> <a href="tel:+18005550199" className="hover:underline text-white">(800) 555-0199</a></p>
-                <p><strong>Email:</strong> <a href="mailto:support@itera.health" className="hover:underline text-white">support@itera.health</a></p>
-                <p><strong>Hours:</strong> Mon-Fri, 9am - 5pm EST</p>
+              <p><strong>Phone:</strong> <a href="tel:+18005550199" className="hover:underline text-white">(800) 555-0199</a></p>
+              <p><strong>Email:</strong> <a href="mailto:support@itera.health" className="hover:underline text-white">support@itera.health</a></p>
+              <p><strong>Hours:</strong> Mon-Fri, 9am - 5pm EST</p>
             </div>
 
-            <a
-              href="mailto:support@itera.health"
+            <button
+              onClick={handleMessageClick}
               className="mt-auto bg-itera-orange text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:bg-itera-orange-dark transition-colors duration-300 w-full text-center"
             >
-              Send Email
-            </a>
+              Send Message
+            </button>
           </div>
 
           {/* Card 2: Schedule a Meeting */}
@@ -49,34 +69,54 @@ const ContactSection: React.FC = () => {
             </div>
             <h3 className="text-2xl font-bold text-white mb-2">Schedule a Meeting</h3>
             <p className="text-blue-200 mb-6 flex-grow">Pick a time to meet with an ITERA representative.</p>
-            
+
             <div className="mb-8">
-                <div className="flex justify-center gap-2">
-                    {[15, 30, 45].map(duration => (
-                        <button
-                            key={duration}
-                            onClick={() => setSelectedDuration(duration)}
-                            className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200 ${selectedDuration === duration ? 'bg-itera-orange text-white' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
-                        >
-                            {duration} min
-                        </button>
-                    ))}
-                </div>
+              <div className="flex justify-center gap-2">
+                {[15, 30, 45].map(duration => (
+                  <button
+                    key={duration}
+                    onClick={() => setSelectedDuration(duration)}
+                    className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors duration-200 ${selectedDuration === duration ? 'bg-itera-orange text-white' : 'bg-white/10 text-blue-100 hover:bg-white/20'}`}
+                  >
+                    {duration} min
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <a
-              href="https://calendar.google.com/"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => {
+                if (isAuthenticated) {
+                  setIsModalOpen(true);
+                } else {
+                  if (onAuthRequest) {
+                    onAuthRequest('login');
+                  }
+                }
+              }}
               className="mt-auto bg-itera-orange text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:bg-itera-orange-dark transition-colors duration-300 w-full text-center"
             >
               Schedule a Meeting
-            </a>
+            </button>
           </div>
         </div>
       </div>
+
+      <MeetingScheduleModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        initialDuration={selectedDuration}
+      />
+      <EmailContactModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        initialName={currentUser?.name}
+        initialEmail={currentUser?.email}
+      />
     </section>
   );
 };
 
 export default ContactSection;
+
+

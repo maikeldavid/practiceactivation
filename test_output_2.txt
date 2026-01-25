@@ -1,0 +1,42 @@
+
+> itera-health-landing-page@0.0.0 test
+> vitest
+
+
+[1m[44m DEV [49m[22m [34mv4.0.18 [39m[90mD:/Dev/Antigravity/itera-health-landing-page[39m
+
+ [31mΓ¥»[39m App.test.tsx [2m([22m[2m0 test[22m[2m)[22m
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ» Failed Suites 1 ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»
+
+ FAIL  App.test.tsx [ App.test.tsx ]
+Error: Transform failed with 1 error:
+D:/Dev/Antigravity/itera-health-landing-page/components/ContactSection.tsx:96:7: ERROR: Multiple exports with the same name "default"
+  Plugin: vite:esbuild
+  File: D:/Dev/Antigravity/itera-health-landing-page/components/ContactSection.tsx:96:7
+  
+  Multiple exports with the same name "default"
+  94 |  export default ContactSection;
+  95 |  
+  96 |  export default ContactSection;
+     |         ^
+  97 |  
+  
+ Γ¥» failureErrorWithLog node_modules/esbuild/lib/main.js:1467:15
+ Γ¥» node_modules/esbuild/lib/main.js:736:50
+ Γ¥» responseCallbacks.<computed> node_modules/esbuild/lib/main.js:603:9
+ Γ¥» handleIncomingPacket node_modules/esbuild/lib/main.js:658:12
+ Γ¥» Socket.readFromStdout node_modules/esbuild/lib/main.js:581:7
+
+ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»ΓÄ»[1/1]ΓÄ»
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [2mno tests[22m
+[2m   Start at [22m 17:57:25
+[2m   Duration [22m 1.07s[2m (transform 248ms, setup 143ms, import 0ms, tests 0ms, environment 428ms)[22m
+
+[1m[41m FAIL [49m[22m [31mTests failed. Watching for file changes...[39m
+       [2mpress [22m[1mh[22m[2m to show help[22m[2m, [22m[2mpress [22m[1mq[22m[2m to quit[22m
+[31mCancelling test run. Press CTRL+c again to exit forcefully.
+[39m

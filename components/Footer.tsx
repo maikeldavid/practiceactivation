@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import InfoModal from './InfoModal';
+import { Link } from 'react-router-dom';
 import { Logo, LinkedInIcon, InstagramIcon, FacebookIcon } from './IconComponents';
 
 const PrivacyPolicyContent = () => (
@@ -45,85 +46,93 @@ const FooterLinkItem: React.FC<{ href?: string; onClick?: (e: React.MouseEvent<H
 );
 
 const Footer: React.FC = () => {
-  const [modalContent, setModalContent] = useState<{ title: string; content: React.ReactNode } | null>(null);
+    const [modalContent, setModalContent] = useState<{ title: string; content: React.ReactNode } | null>(null);
 
-  const handleLinkClick = (e: React.MouseEvent<HTMLButtonElement>, title: string, content: React.ReactNode) => {
-    e.preventDefault();
-    setModalContent({ title, content });
-  };
-  
-  return (
-    <>
-        <footer className="bg-white py-12 border-t border-gray-200">
-            <div className="container mx-auto px-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-                    {/* Column 1: Logo and Social */}
-                    <div className="space-y-4 col-span-1 md:col-span-2 lg:col-span-1">
-                        <Logo className="h-10" />
+    const handleLinkClick = (e: React.MouseEvent<HTMLButtonElement>, title: string, content: React.ReactNode) => {
+        e.preventDefault();
+        setModalContent({ title, content });
+    };
 
-                        <p className="text-sm text-gray-500 max-w-xs">
-                            Reimagining Healthcare Through Technology.
-                        </p>
-                        <div className="flex space-x-4 pt-2">
-                            <SocialLink href="https://www.linkedin.com/" aria-label="LinkedIn">
-                                <LinkedInIcon className="w-6 h-6" />
-                            </SocialLink>
-                            <SocialLink href="https://www.instagram.com/" aria-label="Instagram">
-                                <InstagramIcon className="w-6 h-6" />
-                            </SocialLink>
-                            <SocialLink href="https://www.facebook.com/" aria-label="Facebook">
-                                <FacebookIcon className="w-6 h-6" />
-                            </SocialLink>
+    return (
+        <>
+            <footer className="bg-white py-12 border-t border-gray-200">
+                <div className="container mx-auto px-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+                        {/* Column 1: Logo and Social */}
+                        <div className="space-y-4 col-span-1 md:col-span-2 lg:col-span-1">
+                            <Logo className="h-10" />
+
+                            <p className="text-sm text-gray-500 max-w-xs">
+                                Reimagining Healthcare Through Technology.
+                            </p>
+                            <div className="flex space-x-4 pt-2">
+                                <SocialLink href="https://www.linkedin.com/" aria-label="LinkedIn">
+                                    <LinkedInIcon className="w-6 h-6" />
+                                </SocialLink>
+                                <SocialLink href="https://www.instagram.com/" aria-label="Instagram">
+                                    <InstagramIcon className="w-6 h-6" />
+                                </SocialLink>
+                                <SocialLink href="https://www.facebook.com/" aria-label="Facebook">
+                                    <FacebookIcon className="w-6 h-6" />
+                                </SocialLink>
+                            </div>
+                        </div>
+
+                        {/* Column 2: Company */}
+                        <div>
+                            <h3 className="font-semibold text-gray-800 mb-4">Company</h3>
+                            <ul className="space-y-3">
+                                <FooterLinkItem href="https://itera.health/providers/">For Providers</FooterLinkItem>
+                                <FooterLinkItem href="https://itera.health/patients-families/">For Patients & Families</FooterLinkItem>
+                                <FooterLinkItem href="https://itera.health/health-plans-employers/">Health Plans & Employers</FooterLinkItem>
+                            </ul>
+                        </div>
+
+                        {/* Column 3: Resources */}
+                        <div>
+                            <h3 className="font-semibold text-gray-800 mb-4">Resources</h3>
+                            <ul className="space-y-3">
+                                <li>
+                                    <Link to="/program-documentation" className="text-gray-600 hover:text-itera-blue-dark transition-colors text-sm">
+                                        Documentation
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link to="/cpt-codes" className="text-gray-600 hover:text-itera-blue-dark transition-colors text-sm">
+                                        CPT Codes
+                                    </Link>
+                                </li>
+                                <FooterLinkItem href="https://itera.health/blog/">Blog</FooterLinkItem>
+                            </ul>
+                        </div>
+
+                        {/* Column 4: Legal */}
+                        <div>
+                            <h3 className="font-semibold text-gray-800 mb-4">Legal</h3>
+                            <ul className="space-y-3">
+                                <FooterLinkItem onClick={(e) => handleLinkClick(e, 'About ITERA HEALTH', <AboutContent />)}>About Us</FooterLinkItem>
+                                <FooterLinkItem onClick={(e) => handleLinkClick(e, 'Privacy Policy', <PrivacyPolicyContent />)}>Privacy Policy</FooterLinkItem>
+                                <FooterLinkItem onClick={(e) => handleLinkClick(e, 'Terms of Use', <TermsOfUseContent />)}>Terms and Conditions</FooterLinkItem>
+                            </ul>
                         </div>
                     </div>
 
-                    {/* Column 2: Company */}
-                    <div>
-                        <h3 className="font-semibold text-gray-800 mb-4">Company</h3>
-                        <ul className="space-y-3">
-                            <FooterLinkItem href="#">For Providers</FooterLinkItem>
-                            <FooterLinkItem href="#">For Patients & Families</FooterLinkItem>
-                            <FooterLinkItem href="#">Health Plans & Employers</FooterLinkItem>
-                        </ul>
-                    </div>
+                    <hr className="my-8 border-gray-200" />
 
-                    {/* Column 3: Resources */}
-                    <div>
-                        <h3 className="font-semibold text-gray-800 mb-4">Resources</h3>
-                        <ul className="space-y-3">
-                            <FooterLinkItem href="#">Documentation</FooterLinkItem>
-                            <FooterLinkItem href="#">CPT Codes</FooterLinkItem>
-                            <FooterLinkItem href="#">Blog</FooterLinkItem>
-                        </ul>
-                    </div>
-
-                    {/* Column 4: Legal */}
-                    <div>
-                        <h3 className="font-semibold text-gray-800 mb-4">Legal</h3>
-                        <ul className="space-y-3">
-                            <FooterLinkItem onClick={(e) => handleLinkClick(e, 'About ITERA HEALTH', <AboutContent />)}>About Us</FooterLinkItem>
-                            <FooterLinkItem onClick={(e) => handleLinkClick(e, 'Privacy Policy', <PrivacyPolicyContent />)}>Privacy Policy</FooterLinkItem>
-                            <FooterLinkItem onClick={(e) => handleLinkClick(e, 'Terms of Use', <TermsOfUseContent />)}>Terms and Conditions</FooterLinkItem>
-                        </ul>
+                    <div className="text-center text-sm text-gray-500">
+                        &copy; 2025 Itera Health. All rights reserved.
                     </div>
                 </div>
-                
-                <hr className="my-8 border-gray-200" />
-
-                <div className="text-center text-sm text-gray-500">
-                    &copy; 2025 Itera Health. All rights reserved.
-                </div>
-            </div>
-        </footer>
-        <InfoModal 
-            isOpen={!!modalContent}
-            onClose={() => setModalContent(null)}
-            title={modalContent?.title || ''}
-        >
-            {modalContent?.content}
-        </InfoModal>
-    </>
-  );
+            </footer>
+            <InfoModal
+                isOpen={!!modalContent}
+                onClose={() => setModalContent(null)}
+                title={modalContent?.title || ''}
+            >
+                {modalContent?.content}
+            </InfoModal>
+        </>
+    );
 };
 
 export default Footer;

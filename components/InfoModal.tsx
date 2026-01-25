@@ -13,7 +13,7 @@ const InfoModal: React.FC<InfoModalProps> = ({ isOpen, onClose, title, children 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-start justify-center p-4 overflow-y-auto pt-10 sm:pt-20" onClick={onClose}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative animate-fade-in-up" onClick={e => e.stopPropagation()}>
         <div className="p-6 md:p-8">
           <div className="flex justify-between items-center mb-4">

@@ -1,5 +1,5 @@
 
-import type { Program, FaqItem, Benefit, TimelineStep } from './types';
+import type { Program, FaqItem, Benefit, TimelineStep, ContactInfo } from './types';
 import {
   HeartPulseIcon,
   UsersIcon,
@@ -38,14 +38,14 @@ export const PROGRAMS: Program[] = [
       "EHR/FHIR integration for billing"
     ],
     eligibility: [
-        "Patients attributed to a value-based care contract.",
-        "Requires completion of an Annual Wellness Visit (AWV).",
-        "Proactive identification of care gaps."
+      "Patients attributed to a value-based care contract.",
+      "Requires completion of an Annual Wellness Visit (AWV).",
+      "Proactive identification of care gaps."
     ],
     billing: [
-        "Aligns with MIPS/APM reporting requirements.",
-        "Primarily billed through established E&M codes.",
-        "Focus on quality measure performance for incentives."
+      "Aligns with MIPS/APM reporting requirements.",
+      "Primarily billed through established E&M codes.",
+      "Focus on quality measure performance for incentives."
     ],
     connectedTo: ["CCM", "RPM", "TCM"]
   },
@@ -64,14 +64,14 @@ export const PROGRAMS: Program[] = [
       "Comprehensive care plan management"
     ],
     eligibility: [
-        "Patient has two or more chronic conditions.",
-        "Conditions expected to last at least 12 months.",
-        "Patient provides documented consent."
+      "Patient has two or more chronic conditions.",
+      "Conditions expected to last at least 12 months.",
+      "Patient provides documented consent."
     ],
     billing: [
-        "CPT® 99490 for 20 minutes of clinical staff time per month.",
-        "CPT® 99439 for each additional 20 minutes.",
-        "Requires a comprehensive care plan."
+      "CPT® 99490 for 20 minutes of clinical staff time per month.",
+      "CPT® 99439 for each additional 20 minutes.",
+      "Requires a comprehensive care plan."
     ],
     connectedTo: ["RPM", "PCM", "APCM"]
   },
@@ -90,14 +90,14 @@ export const PROGRAMS: Program[] = [
       "Automated billing report generation"
     ],
     eligibility: [
-        "Patient has at least one chronic condition.",
-        "Monitoring must be ordered by a physician.",
-        "Data must be collected for at least 16 days a month."
+      "Patient has at least one chronic condition.",
+      "Monitoring must be ordered by a physician.",
+      "Data must be collected for at least 16 days a month."
     ],
     billing: [
-        "CPT® 99453 for device setup and patient education.",
-        "CPT® 99454 for device supply with daily recordings.",
-        "CPT® 99457 for the first 20 minutes of monitoring."
+      "CPT® 99453 for device setup and patient education.",
+      "CPT® 99454 for device supply with daily recordings.",
+      "CPT® 99457 for the first 20 minutes of monitoring."
     ],
     connectedTo: ["CCM", "TCM", "RTM"]
   },
@@ -116,14 +116,14 @@ export const PROGRAMS: Program[] = [
       "Performance and progress analysis"
     ],
     eligibility: [
-        "Patient has a musculoskeletal or respiratory condition.",
-        "Requires patient-reported data on therapy/medication.",
-        "Applicable for non-physiologic data."
+      "Patient has a musculoskeletal or respiratory condition.",
+      "Requires patient-reported data on therapy/medication.",
+      "Applicable for non-physiologic data."
     ],
     billing: [
-        "CPT® 98975 for initial setup and patient education.",
-        "CPT® 98977 for device supply with daily recordings.",
-        "CPT® 98980 for the first 20 minutes of treatment management."
+      "CPT® 98975 for initial setup and patient education.",
+      "CPT® 98977 for device supply with daily recordings.",
+      "CPT® 98980 for the first 20 minutes of treatment management."
     ],
     connectedTo: ["RPM", "PCM"]
   },
@@ -142,14 +142,14 @@ export const PROGRAMS: Program[] = [
       "Detailed progress note documentation"
     ],
     eligibility: [
-        "Patient has one complex chronic condition.",
-        "Condition is expected to last at least 3 months.",
-        "Condition places patient at significant risk."
+      "Patient has one complex chronic condition.",
+      "Condition is expected to last at least 3 months.",
+      "Condition places patient at significant risk."
     ],
     billing: [
-        "CPT® 99424 for the first 30 minutes by a physician.",
-        "CPT® 99426 for the first 30 minutes by clinical staff.",
-        "Additional time codes are available."
+      "CPT® 99424 for the first 30 minutes by a physician.",
+      "CPT® 99426 for the first 30 minutes by clinical staff.",
+      "Additional time codes are available."
     ],
     connectedTo: ["CCM", "RTM"]
   },
@@ -168,24 +168,24 @@ export const PROGRAMS: Program[] = [
       "Coordination of community resources"
     ],
     eligibility: [
-        "Patient discharged from an inpatient setting.",
-        "Communication must be made within 2 business days.",
-        "Face-to-face visit within 7 or 14 days."
+      "Patient discharged from an inpatient setting.",
+      "Communication must be made within 2 business days.",
+      "Face-to-face visit within 7 or 14 days."
     ],
     billing: [
-        "CPT® 99495 for moderate complexity decisions.",
-        "CPT® 99496 for high complexity decisions.",
-        "Billing is determined by visit timing and complexity."
+      "CPT® 99495 for moderate complexity decisions.",
+      "CPT® 99496 for high complexity decisions.",
+      "Billing is determined by visit timing and complexity."
     ],
     connectedTo: ["APCM", "RPM"]
   },
 ];
 
 export const WHY_VBC_ITEMS = [
-    { title: 'The Cost of Waiting', description: 'Delayed interventions cost outcomes and revenue.', icon: TrendingUpIcon },
-    { title: 'Capturing Opportunity', description: 'Real-time data turns risks into measurable outcomes.', icon: Laptop },
-    { title: 'Attracting Patients & Payers', description: 'Digital care creates trust and visibility.', icon: UsersIcon },
-    { title: 'The Competitive Advantage', description: 'Adopt early, perform better, and lead in value-based care.', icon: ShieldCheckIcon },
+  { title: 'The Cost of Waiting', description: 'Delayed interventions cost outcomes and revenue.', icon: TrendingUpIcon },
+  { title: 'Capturing Opportunity', description: 'Real-time data turns risks into measurable outcomes.', icon: Laptop },
+  { title: 'Attracting Patients & Payers', description: 'Digital care creates trust and visibility.', icon: UsersIcon },
+  { title: 'The Competitive Advantage', description: 'Adopt early, perform better, and lead in value-based care.', icon: ShieldCheckIcon },
 ];
 
 export const BENEFITS: Benefit[] = [
@@ -212,8 +212,48 @@ export const BENEFITS: Benefit[] = [
 ];
 
 export const TIMELINE_STEPS: TimelineStep[] = [
-  { 
-    step: 1, 
+  {
+    step: 1,
+    title: 'Provider Profile',
+    shortDescription: "Complete your provider information including NPI and care team members.",
+    icon: UserCheckIcon,
+    details: {
+      subtitle: "Establish your professional profile and core care team.",
+      sections: [
+        {
+          title: 'Required Information',
+          points: ['Provider Name & Address', 'Contact Phone & Email', 'National Provider Identifier (NPI)', 'Care Team Member Roles'],
+        },
+        {
+          title: 'Clinical Practice Team',
+          points: ['Provide accurate practice details for legal documentation', 'Identify key staff members who will use the platform']
+        }
+      ],
+      checklist: ["Provider Name & Address saved", "NPI verified", "Care team members added"]
+    }
+  },
+  {
+    step: 2,
+    title: 'Legal Document Signing',
+    shortDescription: "Review and sign BAA and Digital Service Agreement via PandaDoc.",
+    icon: ShieldCheckIcon,
+    details: {
+      subtitle: "Securely sign necessary legal agreements to activate your services.",
+      sections: [
+        {
+          title: 'Documents to Sign',
+          points: ['Business Associate Agreement (BAA)', 'Digital Service Agreement'],
+        },
+        {
+          title: 'Secure Signing Process',
+          points: ['Integrated PandaDoc interface', 'Instant verification upon completion', 'Secure digital storage of signed documents']
+        }
+      ],
+      checklist: ["BAA signed", "Service Agreement signed", "Legal status verified"]
+    }
+  },
+  {
+    step: 3,
     title: 'Collaborative Team Setup',
     shortDescription: "Coordinate workflows efficiently to enhance patient care and monitoring.",
     icon: UsersIcon,
@@ -243,8 +283,8 @@ export const TIMELINE_STEPS: TimelineStep[] = [
       checklist: ["Roles confirmed and submitted to ITERA", "Practice Champion assigned", "Communication channel defined"]
     }
   },
-  { 
-    step: 2, 
+  {
+    step: 4,
     title: 'EHR Access & Patient Eligibility',
     shortDescription: "Secure EHR access, validate patient data, and identify eligible patients.",
     icon: DatabaseIcon,
@@ -273,8 +313,8 @@ export const TIMELINE_STEPS: TimelineStep[] = [
       checklist: ["EHR users confirmed", "Access verified", "Eligibility verified", "Eligible data validated"]
     }
   },
-  { 
-    step: 3, 
+  {
+    step: 5,
     title: 'Staff Platform Training',
     shortDescription: "Comprehensive training for your team on our platform and processes.",
     icon: PresentationIcon,
@@ -293,19 +333,19 @@ export const TIMELINE_STEPS: TimelineStep[] = [
           }
         },
         {
-            title: 'Medical Practice Team',
-            points: ['Complete assigned platform training modules.', 'Ensure all clinical and administrative users are familiar with workflows.']
+          title: 'Medical Practice Team',
+          points: ['Complete assigned platform training modules.', 'Ensure all clinical and administrative users are familiar with workflows.']
         },
         {
-            title: 'ITERA HEALTH Training Support',
-            points: ['Provide onboarding sessions and assist with user setup.', 'Track training progress and validate completion for all users.']
+          title: 'ITERA HEALTH Training Support',
+          points: ['Provide onboarding sessions and assist with user setup.', 'Track training progress and validate completion for all users.']
         }
       ],
       checklist: ["Platform access granted", "Training modules completed", "User setup verified"]
     }
   },
-  { 
-    step: 4, 
+  {
+    step: 6,
     title: 'Enroll Patient & Activation',
     shortDescription: "Complete consent, app setup, and personalized care plan activation.",
     icon: UserPlusIcon,
@@ -328,115 +368,57 @@ export const TIMELINE_STEPS: TimelineStep[] = [
           points: ['Validate patient eligibility and clinical appropriateness before activation.', 'Review and approve care plans.']
         },
         {
-            title: 'ITERA HEALTH Team',
-            points: ['Manage patient communication, consent process, and documentation.', 'Coordinate the delivery of the patient’s monitoring device to their home.']
+          title: 'ITERA HEALTH Team',
+          points: ['Manage patient communication, consent process, and documentation.', 'Coordinate the delivery of the patient’s monitoring device to their home.']
         }
       ],
       checklist: ["Campaign and scheduling completed", "Patient consent obtained", "Care plan approved"]
     }
   },
-  { 
-    step: 5, 
-    title: 'Ongoing Management',
-    shortDescription: "Coordinate care, monitor vitals, and update care plans to improve outcomes.",
-    icon: RepeatIcon,
-    details: {
-      subtitle: "Proactively manage patient care through continuous monitoring and engagement.",
-      sections: [
-        {
-          title: 'Key Actions',
-          points: [
-            'Regular Patient Check-ins and Communication',
-            'Care Coordination',
-            'Vitals Monitoring',
-            'Alert Resolution',
-            'Care Plan Updates',
-            'Patient Engagement'
-          ],
-          subpoints: {
-            'Regular Patient Check-ins and Communication': 'Maintain ongoing communication with patients to support continuity of care and identify needs proactively.',
-            'Care Coordination': 'Communicate regularly with patients and clinical teams.',
-            'Vitals Monitoring': 'Track remote measurements and review trends.',
-            'Alert Resolution': 'Respond to alerts promptly to ensure patient safety.',
-            'Care Plan Updates': 'Modify goals and actions as patient conditions evolve.',
-            'Patient Engagement': 'Encourage adherence through education and motivation.'
-          }
-        },
-        {
-          title: 'ITERA HEALTH Care Managers',
-          points: [
-            'Conduct regular follow-ups and monitor patient progress.',
-            'Manage alerts and escalate clinical concerns.',
-            'Support patient engagement through education and motivation.'
-          ]
-        },
-        {
-          title: 'Medical Practice Team',
-          points: [
-            'Review critical clinical alerts and approve care plan adjustments.',
-            'Authorize patients’ medication refill and appointment requests.',
-            'Collaborate with the Care Manager to ensure continuity and quality of care.'
-          ]
-        }
-      ],
-      checklist: [
-        "Regular patient follow-ups",
-        "Alerts reviewed and adjustments approved",
-        "Care plans updated and documented",
-      ]
-    }
-  },
-  { 
-    step: 6, 
-    title: 'Reporting & Billing',
-    shortDescription: "Performance and billing management to ensure accuracy and compliance.",
-    icon: DollarSignIcon,
-    details: {
-      subtitle: "Ensure financial success and demonstrate value through transparent reporting.",
-      sections: [
-        {
-          title: 'Key Processes',
-          points: [
-            'Performance Reporting',
-            'Claims Preparation',
-            'Billing Submission',
-            'Reconciliation & Follow-up',
-            'Compliance Documentation'
-          ],
-          subpoints: {
-            'Performance Reporting': 'Generate monthly summaries of care, engagement, and program performance metrics.',
-            'Claims Preparation': 'Review and validate time tracking, vitals, encounter notes, and patient eligibility.',
-            'Billing Submission': 'Submit accurate claims to payers in compliance with CMS requirements.',
-            'Reconciliation & Follow-up': 'Verify payments, address rejections, and resolve discrepancies promptly.',
-            'Compliance Documentation': 'Maintain organized records to meet audit and regulatory standards.'
-          }
-        },
-        {
-          title: 'ITERA HEALTH Team',
-          points: [
-            'Prepare and submit validated claims.',
-            'Manage payments and reconciliation.',
-            'Maintain CMS and payer compliance documentation.'
-          ]
-        },
-        {
-          title: 'Medical Practice Team',
-          points: [
-            'Review and confirm encounter notes before submission.',
-            'Provide billing support documentation as required.',
-            'Collaborate with ITERA HEALTH for claim accuracy.'
-          ]
-        }
-      ],
-      checklist: [
-        "Claims prepared and validated",
-        "Claims submitted and payments reconciled.",
-        "Compliance documentation completed"
-      ]
-    }
-  },
 ];
 
+export const DEFAULT_ROLES: ContactInfo[] = [
+  {
+    id: 'critical-response',
+    title: 'Critical & Cautionary Response',
+    description: 'Addressing critical readings and providing instructions to the Care Manager',
+    name: '',
+    email: '',
+    phone: '',
+  },
+  {
+    id: 'medication-management',
+    title: 'Medication Management',
+    description: 'Receiving and processing medication and refill requests',
+    name: '',
+    email: '',
+    phone: '',
+  },
+  {
+    id: 'billing-contact',
+    title: 'Billing Contact',
+    description: 'Assigning a point of contact for managing billing and claims',
+    name: '',
+    email: '',
+    phone: '',
+  },
+  {
+    id: 'care-plan-adjustment',
+    title: 'Care Plan Adjustment',
+    description: 'Making changes to the physician’s prescribed care plan',
+    name: '',
+    email: '',
+    phone: '',
+  },
+  {
+    id: 'appointment-management',
+    title: 'Appointment Management Contact',
+    description: 'Confirming appointment availability for high-risk patients and managing other critical requests',
+    name: '',
+    email: '',
+    phone: '',
+  },
+];
 
 export const FAQ_ITEMS: FaqItem[] = [
   {
