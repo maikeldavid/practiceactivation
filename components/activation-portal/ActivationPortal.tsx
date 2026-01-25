@@ -63,20 +63,20 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
 
   const syncWithZoho = async (extraData: any = {}) => {
     try {
-      const [firstName, ...lastNameParts] = (practiceInfo.name || '').split(' ');
-      const lastName = lastNameParts.join(' ') || firstName;
+      const providerEmail = providerProfile?.providerEmail || practiceInfo.email;
+      const providerName = providerProfile?.providerName || practiceInfo.name;
 
-      await fetch('/api/zoho/sync-provider', {
+      await fetch('/api/zoho/sync-full', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: practiceInfo.email,
-          firstName,
-          lastName,
           practiceName: practiceInfo.practiceName,
+          providerName: providerName,
+          providerEmail: providerEmail,
           phone: providerProfile?.providerPhone,
           address: providerProfile?.providerAddress,
           npi: providerProfile?.providerNPI,
+          internalId: practiceInfo.email, // Using email as internal identifier
           status: completedSteps.size > 0 ? `Step ${Math.max(...Array.from(completedSteps) as number[])} Completed` : 'Initiated',
           ...extraData
         })
