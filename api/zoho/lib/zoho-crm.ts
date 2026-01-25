@@ -1,4 +1,4 @@
-import { getZohoAccessToken, getZohoApiDomain } from './zoho-token';
+import { getZohoAccessToken, getZohoApiDomain } from './zoho-token.js';
 
 export interface ZohoSyncData {
     practiceName: string;

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { upsertZohoHierarchy } from './lib/zoho-crm';
+import { upsertZohoHierarchy } from './lib/zoho-crm.js';
 
 export default async function handler(
     req: VercelRequest,
