@@ -1,5 +1,12 @@
 import { getZohoAccessToken, getZohoApiDomain } from './zoho-token.js';
 
+export interface ZohoAssignmentRule {
+    field: string;
+    operator: string;
+    value: string;
+    assignTo: string;
+}
+
 export interface ZohoSyncData {
     practiceName: string;
     internalPracticeId: string;
@@ -13,11 +20,16 @@ export interface ZohoSyncData {
     otherPotential?: string;
     onboardingStatus: string;
     contractStatus?: string;
+    assignmentRules?: ZohoAssignmentRule[];
 }
 
 export async function upsertZohoHierarchy(data: ZohoSyncData) {
     const accessToken = await getZohoAccessToken();
     const apiDomain = getZohoApiDomain();
+
+    // Determine Owner based on Assignment Rules
+    const targetOwner = evaluateAssignmentRules(data);
+    const ownerField = targetOwner ? { Owner: { id: targetOwner } } : {};
 
     // 1. UPSERT ACCOUNT (The Practice)
     const accountId = await upsertRecord(apiDomain, accessToken, 'Accounts', {
@@ -25,7 +37,8 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         External_ID: data.internalPracticeId,
         Phone: data.providerPhone,
         Billing_Street: data.providerAddress,
-        Website: data.providerURL
+        Website: data.providerURL,
+        ...ownerField
     }, `(Account_Name:equals:${encodeURIComponent(data.practiceName)})`);
 
     // 2. UPSERT CONTACT (The Provider)
@@ -33,18 +46,19 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         First_Name: data.providerName.split(' ')[0],
         Last_Name: data.providerName.split(' ').slice(1).join(' ') || data.providerName || 'Provider',
         Email: data.providerEmail,
-        Account_Name: { id: accountId }, // Link to Account using Object format
+        Account_Name: { id: accountId },
         Phone: data.providerPhone,
         Mailing_Street: data.providerAddress,
-        NPI: data.providerNpi
+        NPI: data.providerNpi,
+        ...ownerField
     }, `(Email:equals:${encodeURIComponent(data.providerEmail)})`);
 
     // 3. UPSERT DEAL (The Onboarding Process)
     const dealName = `Onboarding - ${data.practiceName || data.providerName}`;
     const dealId = await upsertRecord(apiDomain, accessToken, 'Deals', {
         Deal_Name: dealName,
-        Account_Name: { id: accountId }, // Link to Account
-        Contact_Name: { id: contactId }, // Link to Contact
+        Account_Name: { id: accountId },
+        Contact_Name: { id: contactId },
         Stage: mapStatusToStage(data.onboardingStatus, data.contractStatus),
         Amount: 0,
         Closing_Date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
@@ -52,10 +66,53 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         Contract_Status: data.contractStatus,
         Medicare_Potential: data.medicarePotential,
         Other_Potential: data.otherPotential,
-        Internal_ID: data.internalPracticeId
+        Internal_ID: data.internalPracticeId,
+        ...ownerField
     }, `(Deal_Name:equals:${encodeURIComponent(dealName)})`);
 
     return { accountId, contactId, dealId };
+}
+
+function evaluateAssignmentRules(data: ZohoSyncData): string | null {
+    if (!data.assignmentRules || data.assignmentRules.length === 0) return null;
+
+    for (const rule of data.assignmentRules) {
+        let actualValue = '';
+        if (rule.field === 'NPI') actualValue = data.providerNpi || '';
+        if (rule.field === 'Practice Name') actualValue = data.practiceName || '';
+        if (rule.field === 'Zip Code') {
+            // Extract zip from address
+            const zipMatch = data.providerAddress?.match(/\d{5}/);
+            actualValue = zipMatch ? zipMatch[0] : '';
+        }
+        if (rule.field === 'Always') return mapUserToZohoId(rule.assignTo);
+
+        const match = checkCondition(actualValue, rule.operator, rule.value);
+        if (match) return mapUserToZohoId(rule.assignTo);
+    }
+    return null;
+}
+
+function checkCondition(actual: string, operator: string, target: string): boolean {
+    if (operator === 'equals') return actual.toLowerCase() === target.toLowerCase();
+    if (operator === 'contains') return actual.toLowerCase().includes(target.toLowerCase());
+    if (operator === 'starts with') return actual.toLowerCase().startsWith(target.toLowerCase());
+    return false;
+}
+
+function mapUserToZohoId(userName: string): string | null {
+    // This is a placeholder. In a real scenario, you'd have a mapping of names to Zoho User IDs.
+    // If we send a string name to Zoho's ID field, it will error.
+    // So for now, we'll only return a value if it looks like an ID OR we assume the user provides IDs in the 'assignTo' field.
+    if (userName.match(/^\d{18,20}$/)) return userName;
+
+    // Demo Mappings (Should be moved to ENV or Database)
+    const mappings: { [key: string]: string } = {
+        'Maikel (Default)': process.env.ZOHO_DEFAULT_OWNER_ID || '',
+        'Florida Sales Team': '5987103000000215001', // Example Dummy ID
+    };
+
+    return mappings[userName] || null;
 }
 
 async function upsertRecord(domain: string, token: string, module: string, data: any, searchCriteria: string): Promise<string> {

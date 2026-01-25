@@ -21,7 +21,8 @@ export default async function handler(
         otherPotential,
         status,
         contractStatus,
-        internalId
+        internalId,
+        assignmentRules
     } = req.body;
 
     if (!practiceName || !providerEmail) {
@@ -41,7 +42,8 @@ export default async function handler(
             medicarePotential: medicarePotential,
             otherPotential: otherPotential,
             onboardingStatus: status || 'Initiated',
-            contractStatus: contractStatus || 'Pending'
+            contractStatus: contractStatus || 'Pending',
+            assignmentRules: assignmentRules
         });
 
         return res.status(200).json({

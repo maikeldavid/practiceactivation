@@ -16,7 +16,7 @@ import OutreachWorkspaceView from './OutreachWorkspaceView';
 import DocumentsView from './DocumentsView';
 import ProviderProfileView from './ProviderProfileView';
 import DocumentSigningView from './DocumentSigningView';
-import type { EHRConfig, TrainingMeeting } from '../../types';
+import type { EHRConfig, TrainingMeeting, ZohoAssignmentRule } from '../../types';
 
 
 type View = 'dashboard' | 'onboarding' | 'patients' | 'analytics' | 'documents' | 'team' | 'ehr' | 'training' | 'outreach' | 'provider-profile' | 'document-signing';
@@ -61,6 +61,11 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
     { id: '3', message: 'Monthly CCM report ready for review', time: '2 hours ago', read: true },
   ]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [assignmentRules, setAssignmentRules] = useState<ZohoAssignmentRule[]>([
+    { id: '1', field: 'Always', operator: 'equals', value: '*', assignTo: 'Maikel (Default)' },
+    { id: '2', field: 'Zip Code', operator: 'starts with', value: '33', assignTo: 'Florida Sales Team' }
+  ]);
+  const [enableCustomRules, setEnableCustomRules] = useState(true);
 
   if (!isOpen) return null;
 
@@ -88,6 +93,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           otherPotential: providerProfile?.otherPatients,
           internalId: practiceInfo.email,
           status: statusText,
+          assignmentRules: enableCustomRules ? assignmentRules : [],
           ...extraData
         })
       });
@@ -457,6 +463,10 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         isOpen={isSettingsOpen}
         onClose={() => setSettingsOpen(false)}
         currentUser={{ name: practiceInfo.name, email: practiceInfo.email, practiceName: practiceInfo.practiceName }}
+        assignmentRules={assignmentRules}
+        onRulesChange={setAssignmentRules}
+        enableCustomRules={enableCustomRules}
+        onEnableRulesChange={setEnableCustomRules}
       />
     </div>
   );

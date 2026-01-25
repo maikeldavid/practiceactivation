@@ -5,6 +5,10 @@ interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
     currentUser: { name: string; email: string; practiceName: string };
+    assignmentRules: ZohoAssignmentRule[];
+    onRulesChange: (rules: ZohoAssignmentRule[]) => void;
+    enableCustomRules: boolean;
+    onEnableRulesChange: (enabled: boolean) => void;
 }
 
 type SettingsTab = 'users' | 'roles' | 'crm' | 'general';
@@ -32,7 +36,15 @@ interface Role {
     userCount: number;
 }
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, currentUser }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({
+    isOpen,
+    onClose,
+    currentUser,
+    assignmentRules,
+    onRulesChange,
+    enableCustomRules,
+    onEnableRulesChange
+}) => {
     const [activeTab, setActiveTab] = useState<SettingsTab>('users');
     const [users, setUsers] = useState<User[]>([
         { id: '1', name: 'Admin User', email: 'admin@itera.health', role: 'Admin', status: 'active' },
@@ -47,13 +59,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, currentU
         { id: '4', name: 'Physician', permissions: ['View Patients', 'Edit Care Plans', 'View Reports'], userCount: 0 },
         { id: '5', name: 'Care Coordinator', permissions: ['View Patients', 'Edit Care Plans'], userCount: 0 }
     ]);
-
-    const [assignmentRules, setAssignmentRules] = useState<ZohoAssignmentRule[]>([
-        { id: '1', field: 'Always', operator: 'equals', value: '*', assignTo: 'Maikel (Default)' },
-        { id: '2', field: 'Zip Code', operator: 'starts with', value: '33', assignTo: 'Florida Sales Team' }
-    ]);
-
-    const [enableCustomRules, setEnableCustomRules] = useState(true);
 
     if (!isOpen) return null;
 
@@ -196,7 +201,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, currentU
                                     <div className="flex items-center gap-3">
                                         <span className="text-sm font-medium text-gray-500">Enable Rules</span>
                                         <button
-                                            onClick={() => setEnableCustomRules(!enableCustomRules)}
+                                            onClick={() => onEnableRulesChange(!enableCustomRules)}
                                             className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${enableCustomRules ? 'bg-itera-blue' : 'bg-gray-300'}`}
                                         >
                                             <div className={`w-4 h-4 bg-white rounded-full transition-transform duration-200 ${enableCustomRules ? 'translate-x-6' : 'translate-x-0'}`} />
@@ -233,7 +238,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, currentU
                                                         value: '',
                                                         assignTo: 'Select User...'
                                                     };
-                                                    setAssignmentRules([...assignmentRules, newRule]);
+                                                    onRulesChange([...assignmentRules, newRule]);
                                                 }}
                                                 className="text-itera-blue hover:text-itera-blue-dark font-medium text-sm flex items-center gap-1"
                                             >
@@ -290,7 +295,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, currentU
                                                             </td>
                                                             <td className="px-6 py-4 text-right">
                                                                 <button
-                                                                    onClick={() => setAssignmentRules(assignmentRules.filter(r => r.id !== rule.id))}
+                                                                    onClick={() => onRulesChange(assignmentRules.filter(r => r.id !== rule.id))}
                                                                     className="text-gray-300 hover:text-red-500 transition-colors"
                                                                 >
                                                                     <Trash2Icon className="w-4 h-4" />

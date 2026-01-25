@@ -120,3 +120,10 @@ export interface TrainingMeeting {
   link?: string;
   status: 'scheduled' | 'pending';
 }
+export interface ZohoAssignmentRule {
+  id: string;
+  field: 'NPI' | 'Practice Name' | 'Zip Code' | 'Always';
+  operator: 'equals' | 'contains' | 'starts with';
+  value: string;
+  assignTo: string;
+}
