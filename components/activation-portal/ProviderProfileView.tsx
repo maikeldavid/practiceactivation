@@ -70,6 +70,17 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         return `https://${url}`;
     };
 
+    const formatPhoneNumber = (value: string) => {
+        if (!value) return value;
+        const phoneNumber = value.replace(/[^\d]/g, '');
+        const phoneNumberLength = phoneNumber.length;
+        if (phoneNumberLength < 4) return phoneNumber;
+        if (phoneNumberLength < 7) {
+            return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+        }
+        return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)} ${phoneNumber.slice(6, 10)}`;
+    };
+
     const handleAutoSave = () => {
         // Only auto-save if something has changed from initial
         // Here we just call onSave with isFinal = false
@@ -93,7 +104,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
 
         // Helper regex
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const phoneRegex = /^\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/;
+        const phoneRegex = /^(\+?\d{1,2}\s?)?(\(\d{3}\)|\d{3})[\s.-]?\d{3}[\s.-]?\d{4}$/;
         const npiRegex = /^\d{10}$/;
 
         // 1. Practice Info
@@ -170,7 +181,11 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
 
     const updateLocation = (index: number, field: keyof PracticeLocation, value: string) => {
         const newLocations = [...locations];
-        newLocations[index] = { ...newLocations[index], [field]: value };
+        let newValue = value;
+        if (field === 'phone') {
+            newValue = formatPhoneNumber(value);
+        }
+        newLocations[index] = { ...newLocations[index], [field]: newValue };
         setLocations(newLocations);
     };
 
@@ -427,7 +442,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                             <input
                                 type="tel"
                                 value={physician.phone}
-                                onChange={(e) => setPhysician({ ...physician, phone: e.target.value })}
+                                onChange={(e) => setPhysician({ ...physician, phone: formatPhoneNumber(e.target.value) })}
                                 className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue ${errors.physicianPhone ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
                                 placeholder="(555) 000-0000"
                             />
@@ -526,8 +541,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                             />
                             <input
                                 type="tel"
-                                value={newMember.phone}
-                                onChange={(e) => setNewMember(prev => ({ ...prev, phone: e.target.value }))}
+                                onChange={(e) => setNewMember(prev => ({ ...prev, phone: formatPhoneNumber(e.target.value) }))}
                                 className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
                                 placeholder="Phone"
                             />
