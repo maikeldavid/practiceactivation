@@ -64,12 +64,19 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         return () => clearTimeout(timer);
     }, [practiceData, locations, physician, careTeamMembers]);
 
+    const normalizeUrl = (url: string) => {
+        if (!url.trim()) return '';
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        return `https://${url}`;
+    };
+
     const handleAutoSave = () => {
         // Only auto-save if something has changed from initial
         // Here we just call onSave with isFinal = false
         setIsSaving(true);
         onSave({
             ...practiceData,
+            website: normalizeUrl(practiceData.website),
             locations,
             physician,
             careTeamMembers
@@ -93,9 +100,6 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         if (!practiceData.name.trim()) newErrors.practiceName = 'Practice name is required';
         if (practiceData.orgNPI && !npiRegex.test(practiceData.orgNPI.replace(/\D/g, ''))) {
             newErrors.orgNPI = 'Organization NPI must be exactly 10 digits';
-        }
-        if (practiceData.website.trim() && !practiceData.website.startsWith('http')) {
-            newErrors.website = 'Website must start with http:// or https://';
         }
 
         // 2. Locations
@@ -135,6 +139,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         if (validateForm()) {
             onSave({
                 ...practiceData,
+                website: normalizeUrl(practiceData.website),
                 locations,
                 physician,
                 careTeamMembers
