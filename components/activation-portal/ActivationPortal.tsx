@@ -66,7 +66,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       const providerEmail = providerProfile?.providerEmail || practiceInfo.email;
       const providerName = providerProfile?.providerName || practiceInfo.name;
 
-      await fetch('/api/zoho/sync-full', {
+      const response = await fetch('/api/zoho/sync-full', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -81,6 +81,15 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           ...extraData
         })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Zoho Sync Error:', errorData);
+        // Show alert to user so they can report the error
+        if (extraData.showError) {
+          alert(`Zoho Sync Error: ${errorData.message}`);
+        }
+      }
     } catch (error) {
       console.error('Failed to sync with Zoho:', error);
     }
@@ -260,7 +269,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
                   status: 'Step 1 Completed (Provider Profile)',
                   phone: data.providerPhone,
                   address: data.providerAddress,
-                  npi: data.providerNPI
+                  npi: data.providerNPI,
+                  showError: true
                 });
                 return next;
               });

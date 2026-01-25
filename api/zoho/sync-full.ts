@@ -48,8 +48,9 @@ export default async function handler(
         console.error('Zoho Full Sync Error:', error);
         return res.status(500).json({
             success: false,
-            error: 'Internal server error during Zoho sync',
-            message: error instanceof Error ? error.message : 'Unknown error'
+            error: 'Zoho Sync Failed',
+            message: error instanceof Error ? error.message : 'Unknown error',
+            debug: process.env.NODE_ENV === 'development' ? error : undefined
         });
     }
 }
