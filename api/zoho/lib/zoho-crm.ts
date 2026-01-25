@@ -88,8 +88,7 @@ async function upsertRecord(domain: string, token: string, module: string, data:
         return result.data[0].details.id;
     }
 
-    // 4. SMART FALLBACK: If a field is invalid/missing in Zoho (like a custom field not yet created), 
-    // remove it and try again automatically.
+    // 4. SMART FALLBACK: If a field is invalid/missing in Zoho (like a custom field not yet created)
     const firstError = result.data?.[0];
     if (firstError?.code === 'INVALID_DATA' && firstError?.details?.api_name) {
         const invalidField = firstError.details.api_name;
@@ -98,17 +97,18 @@ async function upsertRecord(domain: string, token: string, module: string, data:
         const newData = { ...data };
         delete newData[invalidField];
 
-        // If we still have data to send, retry recursively
         if (Object.keys(newData).length > 0) {
             return upsertRecord(domain, token, module, newData, searchCriteria);
         }
     }
 
-    // If it's another type of error or we can't retry
+    // 5. FINAL ERROR REPORTING
     const errorMsg = result.data?.[0]?.message || JSON.stringify(result);
-    console.error(`Zoho ${module} Final Error:`, errorMsg);
-    throw new Error(`Zoho API [${module}]: ${errorMsg}`);
+    const detailMsg = `Zoho [${module}] Sync Failed: ${errorMsg}. Data sent: ${JSON.stringify(data)}`;
+    console.error(detailMsg);
+    throw new Error(detailMsg);
 }
+
 
 function mapStatusToStage(onboardingStatus: string, contractStatus?: string): string {
     if (contractStatus === 'Signed') return 'Closed Won';
