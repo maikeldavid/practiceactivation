@@ -97,14 +97,12 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       }
 
       if (!response.ok) {
-        alert(`Zoho Sync Failed: ${errorData.message || errorData.error || 'Check Vercel logs'}`);
+        console.error('Zoho Sync Error:', errorData);
       } else {
         console.log('Zoho Sync Successful');
-        alert('Sincronización con Zoho completada con éxito.');
       }
     } catch (error) {
       console.error('Critical Connection Error:', error);
-      alert(`Critical Sync Error: ${error instanceof Error ? error.message : 'Connection failed'}`);
     }
   };
 
@@ -282,8 +280,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
                   status: 'Step 1 Completed (Provider Profile)',
                   phone: data.providerPhone,
                   address: data.providerAddress,
-                  npi: data.providerNPI,
-                  showError: true
+                  npi: data.providerNPI
                 });
                 return next;
               });

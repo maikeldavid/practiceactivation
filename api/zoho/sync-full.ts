@@ -21,15 +21,6 @@ export default async function handler(
         internalId
     } = req.body;
 
-    console.log('--- Sync Request Received ---');
-    console.log('Node Version:', process.version);
-    console.log('Env Check:', {
-        clientId: !!process.env.ZOHO_CLIENT_ID,
-        clientSecret: !!process.env.ZOHO_CLIENT_SECRET,
-        refreshToken: !!process.env.ZOHO_REFRESH_TOKEN,
-        dc: process.env.ZOHO_DC
-    });
-
     if (!practiceName || !providerEmail) {
         return res.status(400).json({ error: 'Missing required sync data' });
     }
