@@ -66,11 +66,15 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
     { id: '2', field: 'Zip Code', operator: 'starts with', value: '33', assignTo: 'Florida Sales Team' }
   ]);
   const [enableCustomRules, setEnableCustomRules] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   if (!isOpen) return null;
 
   const syncWithZoho = async (extraData: any = {}) => {
+    if (isSyncing) return;
+
     try {
+      setIsSyncing(true);
       const providerEmail = providerProfile?.providerEmail || practiceInfo.email;
       const providerName = providerProfile?.providerName || practiceInfo.name;
 
@@ -115,6 +119,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       }
     } catch (error) {
       console.error('Critical Connection Error:', error);
+    } finally {
+      setIsSyncing(false);
     }
   };
 

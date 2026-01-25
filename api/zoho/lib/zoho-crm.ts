@@ -39,7 +39,7 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         Billing_Street: data.providerAddress,
         Website: data.providerURL,
         ...ownerField
-    }, `(Account_Name:equals:${encodeURIComponent(data.practiceName)})`);
+    }, `(External_ID:equals:${encodeURIComponent(data.internalPracticeId)})`);
 
     // 2. UPSERT CONTACT (The Provider)
     const contactId = await upsertRecord(apiDomain, accessToken, 'Contacts', {
@@ -68,7 +68,7 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         Other_Potential: data.otherPotential,
         Internal_ID: data.internalPracticeId,
         ...ownerField
-    }, `(Deal_Name:equals:${encodeURIComponent(dealName)})`);
+    }, `(Internal_ID:equals:${encodeURIComponent(data.internalPracticeId)})`);
 
     return { accountId, contactId, dealId };
 }
