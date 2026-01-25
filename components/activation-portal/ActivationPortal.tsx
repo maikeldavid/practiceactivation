@@ -82,6 +82,14 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       const currentStep = completedSteps.size > 0 ? Math.max(...Array.from(completedSteps) as number[]) : 0;
       const statusText = currentStep > 0 ? `Step ${currentStep} Completed` : 'Initiated';
 
+      // Security Check: If identity changed, clear the stale contactId
+      // We store the last synced email in the meta object to compare
+      const effectiveZohoIds = { ...zohoIds };
+      if (zohoIds.contactId && (zohoIds as any).lastSyncedEmail !== physicianEmail) {
+        console.warn('Identity change detected. Clearing stale Zoho Contact ID.');
+        delete effectiveZohoIds.contactId;
+      }
+
       console.log('--- Starting Zoho Sync ---');
       const response = await fetch('/api/zoho/sync-full', {
         method: 'POST',
@@ -100,7 +108,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           status: statusText,
           assignmentRules: enableCustomRules ? assignmentRules : [],
           // Add nested metadata for future backend use
-          ...zohoIds, // Pass existing IDs if we have them
+          ...effectiveZohoIds, // Pass sanitized IDs
           healthcareData: activeProfile,
           ...extraData
         })
@@ -116,7 +124,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         if (responseData.details) {
           setZohoIds(prev => ({
             ...prev,
-            ...responseData.details
+            ...responseData.details,
+            lastSyncedEmail: physicianEmail // Track identity
           }));
         }
       }

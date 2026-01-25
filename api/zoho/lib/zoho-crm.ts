@@ -126,32 +126,29 @@ function mapUserToZohoId(userName: string): string | null {
 }
 
 async function upsertRecord(domain: string, token: string, module: string, data: any, searchCriteria: string, explicitId?: string): Promise<string> {
-    console.log(`Zoho [${module}]: Attempting upsert. Explicit ID: ${explicitId || 'None'}. Criteria: ${searchCriteria}`);
+    // 1. Identification Phase: Find if record exists by identity (Search > Explicit ID)
+    let existingId: string | null = null;
+    let fallbackSearchDone = false;
 
-    // Prioritize explicit ID if provided
-    let existingId = explicitId || null;
+    // A. SEARCH by identifiers (MOST ACCURATE)
+    try {
+        const searchUrl = `${domain}/${module}/search?criteria=${encodeURIComponent(searchCriteria)}`;
+        const searchRes = await fetch(searchUrl, {
+            headers: { 'Authorization': `Zoho-oauthtoken ${token}` }
+        });
 
-    // 1. Primary search criteria if no explicit ID
-    if (!existingId) {
-        try {
-            const searchUrl = `${domain}/${module}/search?criteria=${encodeURIComponent(searchCriteria)}`;
-            const searchRes = await fetch(searchUrl, {
-                headers: { 'Authorization': `Zoho-oauthtoken ${token}` }
-            });
-
-            if (searchRes.status === 200) {
-                const searchData = await searchRes.json();
-                if (searchData.data && searchData.data.length > 0) {
-                    existingId = searchData.data[0].id;
-                    console.log(`Zoho [${module}]: Found existing record with ID: ${existingId}`);
-                }
+        if (searchRes.status === 200) {
+            const searchData = await searchRes.json();
+            if (searchData.data && searchData.data.length > 0) {
+                existingId = searchData.data[0].id;
+                console.log(`Zoho [${module}]: Found existing record by identifier: ${existingId}`);
             }
-        } catch (e) {
-            console.error(`Zoho [${module}]: Primary search failed:`, e);
         }
+    } catch (e) {
+        console.error(`Zoho [${module}]: Identification search failed:`, e);
     }
 
-    // 2. Secondary search fallback (by Name/Email) if primary failed or returned nothing
+    // B. SECONDARY SEARCH fallback (by Name/Email) - Only if A found nothing
     if (!existingId) {
         let fallbackCriteria = '';
         if (module === 'Accounts' && data.Account_Name) {
@@ -173,7 +170,7 @@ async function upsertRecord(domain: string, token: string, module: string, data:
                     const fallbackData = await fallbackRes.json();
                     if (fallbackData.data && fallbackData.data.length > 0) {
                         existingId = fallbackData.data[0].id;
-                        console.log(`Zoho [${module}]: Found record via fallback ID: ${existingId}`);
+                        console.log(`Zoho [${module}]: Found record via fallback identity: ${existingId}`);
                     }
                 }
             } catch (e) {
@@ -181,6 +178,18 @@ async function upsertRecord(domain: string, token: string, module: string, data:
             }
         }
     }
+
+    // C. VERIFY EXPLICIT ID (Only use if Search found nothing)
+    // IMPORTANT: If search found NOTHING, but an explicit ID was provided,
+    // we should be CAREFUL. If the ID was for a DIFFERENT identity, using it
+    // will cause an overwrite. 
+    // SAFEST: If Search (which uses Email/ExtID) found nothing, we assume this is a NEW identity.
+    // We only use explicitId if it was the ONLY thing provided and we have no search criteria (rare).
+    if (!existingId && explicitId) {
+        console.log(`Zoho [${module}]: Identity search yielded no results. Ignoring explicit ID ${explicitId} to prevent cross-account overwrite.`);
+        // Note: We don't set existingId = explicitId here anymore to be safe.
+    }
+
 
     // 2. Perform Upsert
     const payload = { data: [data] };
