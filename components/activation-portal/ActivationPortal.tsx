@@ -284,18 +284,23 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       case 'provider-profile':
         return (
           <ProviderProfileView
-            initialData={providerProfile || undefined}
-            onSave={(data) => {
+            initialData={providerProfile || { name: practiceInfo.practiceName }}
+            onSave={(data, isFinal = true) => {
               setProviderProfile(data);
-              setCompletedSteps(prev => {
-                const next = new Set(prev).add(1);
+              if (isFinal) {
+                setCompletedSteps(prev => {
+                  const next = new Set(prev).add(1);
+                  syncWithZoho({
+                    status: 'Step 1 Completed (Health System Profile)'
+                  }, data);
+                  return next;
+                });
+                setActiveView('onboarding');
+              } else {
                 syncWithZoho({
-                  status: 'Step 1 Completed (Health System Profile)'
+                  status: 'Updating Health System Profile'
                 }, data);
-                return next;
-              });
-              // Redirect to onboarding to continue with next steps
-              setActiveView('onboarding');
+              }
             }}
             onCancel={providerProfile ? () => setActiveView('onboarding') : undefined}
           />

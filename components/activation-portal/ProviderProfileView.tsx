@@ -4,7 +4,7 @@ import type { PracticeProfile, PracticeLocation, ContactInfo } from '../../types
 
 interface ProviderProfileViewProps {
     initialData?: Partial<PracticeProfile>;
-    onSave: (data: PracticeProfile) => void;
+    onSave: (data: PracticeProfile, isFinal?: boolean) => void;
     onCancel?: () => void;
 }
 
@@ -48,6 +48,36 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         officeAssignments: [] as string[]
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [isSaving, setIsSaving] = useState(false);
+    const [lastSaved, setLastSaved] = useState<Date | null>(null);
+
+    // Debounced Auto-save Effect
+    React.useEffect(() => {
+        const timer = setTimeout(() => {
+            if (isFormValid) {
+                handleAutoSave();
+            }
+        }, 2000); // 2 second debounce
+
+        return () => clearTimeout(timer);
+    }, [practiceData, locations, physician, careTeamMembers]);
+
+    const handleAutoSave = () => {
+        // Only auto-save if something has changed from initial
+        // Here we just call onSave with isFinal = false
+        setIsSaving(true);
+        onSave({
+            ...practiceData,
+            locations,
+            physician,
+            careTeamMembers
+        }, false);
+
+        setTimeout(() => {
+            setIsSaving(false);
+            setLastSaved(new Date());
+        }, 500);
+    };
 
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
@@ -79,7 +109,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                 locations,
                 physician,
                 careTeamMembers
-            });
+            }, true);
         }
     };
 
@@ -150,9 +180,24 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
 
     return (
         <div className="space-y-8 animate-fade-in-up pb-20">
-            <div>
-                <h2 className="text-3xl font-bold text-itera-blue-dark mb-2">Health System Profile</h2>
-                <p className="text-gray-600">Structure your practice, locations, and providers to align with healthcare industry standards.</p>
+            <div className="flex justify-between items-end">
+                <div>
+                    <h2 className="text-3xl font-bold text-itera-blue-dark mb-2">Health System Profile</h2>
+                    <p className="text-gray-600">Structure your practice, locations, and providers to align with healthcare industry standards.</p>
+                </div>
+                <div className="text-right pb-1">
+                    {isSaving ? (
+                        <span className="text-xs font-bold text-itera-blue flex items-center gap-2 animate-pulse">
+                            <span className="w-2 h-2 bg-itera-blue rounded-full"></span>
+                            Auto-saving...
+                        </span>
+                    ) : lastSaved ? (
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <CheckCircleIcon className="w-3.5 h-3.5 text-green-500" />
+                            All changes saved at {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                    ) : null}
+                </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
