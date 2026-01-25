@@ -237,7 +237,7 @@ async function upsertRecord(domain: string, token: string, module: string, data:
         }
 
         if (Object.keys(newData).length > 0) {
-            return upsertRecord(domain, token, module, newData, newCriteria);
+            return upsertRecord(domain, token, module, newData, newCriteria, existingId || explicitId);
         }
     }
 

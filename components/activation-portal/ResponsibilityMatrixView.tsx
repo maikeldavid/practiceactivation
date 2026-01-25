@@ -89,7 +89,7 @@ const ResponsibilityMatrixView: React.FC = () => {
                             {/* Items */}
                             <div className="divide-y divide-gray-50">
                                 {category.items.map((item, itemIdx) => (
-                                    <div key={itemIdx} className="grid grid-cols-12 px-8 py-6 hover:bg-gray-50/50 transition-colors gap-4">
+                                    <div key={itemIdx} className="grid grid-cols-12 px-8 py-3 hover:bg-gray-50/50 transition-colors gap-4">
                                         <div className="col-span-6 lg:col-span-7">
                                             <p className="font-bold text-gray-800 text-sm mb-1">{item.task}</p>
                                             <p className="text-xs text-gray-500 leading-relaxed font-normal">{item.detail}</p>

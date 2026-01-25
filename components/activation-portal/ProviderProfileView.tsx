@@ -59,7 +59,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
             if (basicValid) {
                 handleAutoSave();
             }
-        }, 2000); // 2 second debounce
+        }, 3500); // 3.5 second debounce for stability
 
         return () => clearTimeout(timer);
     }, [practiceData, locations, physician, careTeamMembers]);
@@ -82,8 +82,20 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
     };
 
     const handleAutoSave = () => {
-        // Only auto-save if something has changed from initial
-        // Here we just call onSave with isFinal = false
+        const currentData = {
+            ...practiceData,
+            locations,
+            physician,
+            careTeamMembers
+        };
+
+        // Comparison snapshot (simple stringify is sufficient for these flat/managed structures)
+        const currentSnapshot = JSON.stringify(currentData);
+        if ((window as any)._lastAutoSaveSnapshot === currentSnapshot) {
+            console.log('ProviderProfileView: Data unchanged, skipping auto-save');
+            return;
+        }
+
         setIsSaving(true);
         onSave({
             ...practiceData,
@@ -96,7 +108,8 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         setTimeout(() => {
             setIsSaving(false);
             setLastSaved(new Date());
-        }, 500);
+            (window as any)._lastAutoSaveSnapshot = currentSnapshot;
+        }, 800);
     };
 
     const validateForm = () => {
