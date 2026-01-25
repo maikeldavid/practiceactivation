@@ -86,13 +86,20 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         })
       });
 
+      let errorData;
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.indexOf("application/json") !== -1) {
+        errorData = await response.json();
+      } else {
+        const text = await response.text();
+        console.error('Server returned non-JSON response:', text);
+        errorData = { message: `Server Error (HTML): ${text.substring(0, 100)}...` };
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Zoho Sync Error:', errorData);
         alert(`Zoho Sync Failed: ${errorData.message || errorData.error || 'Check Vercel logs'}`);
       } else {
         console.log('Zoho Sync Successful');
-        // Add a visible confirmation for debugging
         alert('Sincronización con Zoho completada con éxito.');
       }
     } catch (error) {
