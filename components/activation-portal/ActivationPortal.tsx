@@ -83,10 +83,14 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       const statusText = currentStep > 0 ? `Step ${currentStep} Completed` : 'Initiated';
 
       // Security Check: If identity changed, clear the stale contactId
-      // We store the last synced email in the meta object to compare
+      // We store the last synced email AND name to compare
       const effectiveZohoIds = { ...zohoIds };
-      if (zohoIds.contactId && (zohoIds as any).lastSyncedEmail !== physicianEmail) {
-        console.warn('Identity change detected. Clearing stale Zoho Contact ID.');
+      const hasIdentityChange =
+        ((zohoIds as any).lastSyncedEmail && (zohoIds as any).lastSyncedEmail !== physicianEmail) ||
+        ((zohoIds as any).lastSyncedName && (zohoIds as any).lastSyncedName !== physicianName);
+
+      if (zohoIds.contactId && hasIdentityChange) {
+        console.warn('Identity change detected (Name or Email). Clearing stale Zoho Contact ID.');
         delete effectiveZohoIds.contactId;
       }
 
@@ -125,7 +129,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           setZohoIds(prev => ({
             ...prev,
             ...responseData.details,
-            lastSyncedEmail: physicianEmail // Track identity
+            lastSyncedEmail: physicianEmail,
+            lastSyncedName: physicianName
           }));
         }
       }
@@ -371,7 +376,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             <NavItem view="outreach" icon={HeadsetIcon} label="Daily Outreach Plan" />
             <NavItem view="patients" icon={UsersIcon} label="Patient Management" />
             <NavItem view="analytics" icon={BarChart3} label="Enrollment Analytics" />
-            <NavItem view="responsibility-matrix" icon={ShieldCheckIcon} label="Matriz de Responsabilidades" />
+            <NavItem view="responsibility-matrix" icon={ShieldCheckIcon} label="Responsibility Matrix" />
             <NavItem view="documents" icon={FolderIcon} label="Document Library" />
             <NavItem view="team" icon={Settings} label="Care Team Setup" />
           </nav>
