@@ -46,7 +46,13 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
   const [documentsSignedStatus, setDocumentsSignedStatus] = useState(false);
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [isUserMenuOpen, setUserMenuOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState({ name: practiceInfo.name, email: practiceInfo.email, role: practiceInfo.role });
+  const [userProfile, setUserProfile] = useState({
+    name: practiceInfo.name,
+    email: practiceInfo.email,
+    role: practiceInfo.role,
+    phone: '',
+    address: ''
+  });
   const [notifications] = useState([
     { id: '1', message: 'New patient enrollment pending approval', time: '5 min ago', read: false },
     { id: '2', message: 'Team member John Doe added to care team', time: '1 hour ago', read: false },
@@ -326,7 +332,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           <UserProfileView
             initialData={userProfile}
             onSave={(data) => {
-              setUserProfile(data);
+              setUserProfile(prev => ({ ...prev, ...data }));
               setActiveView('onboarding');
             }}
             onCancel={() => setActiveView('onboarding')}
@@ -440,10 +446,10 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
 
                   {/* User Menu Dropdown */}
                   {isUserMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
                       <button
                         onClick={() => {
-                          setActiveView('provider-profile');
+                          setActiveView('user-profile');
                           setUserMenuOpen(false);
                         }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
