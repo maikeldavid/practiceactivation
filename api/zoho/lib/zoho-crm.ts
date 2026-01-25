@@ -124,11 +124,10 @@ function mapUserToZohoId(userName: string): string | null {
 async function upsertRecord(domain: string, token: string, module: string, data: any, searchCriteria: string): Promise<string> {
     console.log(`Zoho [${module}]: Attempting upsert with criteria: ${searchCriteria}`);
 
-    // 1. Search first to see if record exists
+    // 1. Primary search criteria
     let existingId = null;
-    const searchUrl = `${domain}/${module}/search?criteria=${encodeURI(searchCriteria)}`;
-
     try {
+        const searchUrl = `${domain}/${module}/search?criteria=${encodeURIComponent(searchCriteria)}`;
         const searchRes = await fetch(searchUrl, {
             headers: { 'Authorization': `Zoho-oauthtoken ${token}` }
         });
@@ -139,11 +138,40 @@ async function upsertRecord(domain: string, token: string, module: string, data:
                 existingId = searchData.data[0].id;
                 console.log(`Zoho [${module}]: Found existing record with ID: ${existingId}`);
             }
-        } else {
-            console.warn(`Zoho [${module}]: Search failed with status ${searchRes.status}. Proceeding as new record.`);
         }
     } catch (e) {
-        console.error(`Zoho [${module}]: Search error:`, e);
+        console.error(`Zoho [${module}]: Primary search failed:`, e);
+    }
+
+    // 2. Secondary search fallback (by Name/Email) if primary failed or returned nothing
+    if (!existingId) {
+        let fallbackCriteria = '';
+        if (module === 'Accounts' && data.Account_Name) {
+            fallbackCriteria = `(Account_Name:equals:${encodeURIComponent(data.Account_Name)})`;
+        } else if (module === 'Contacts' && data.Email) {
+            fallbackCriteria = `(Email:equals:${encodeURIComponent(data.Email)})`;
+        } else if (module === 'Deals' && data.Deal_Name) {
+            fallbackCriteria = `(Deal_Name:equals:${encodeURIComponent(data.Deal_Name)})`;
+        }
+
+        if (fallbackCriteria) {
+            console.log(`Zoho [${module}]: Secondary search attempt with fallback: ${fallbackCriteria}`);
+            try {
+                const fallbackUrl = `${domain}/${module}/search?criteria=${encodeURIComponent(fallbackCriteria)}`;
+                const fallbackRes = await fetch(fallbackUrl, {
+                    headers: { 'Authorization': `Zoho-oauthtoken ${token}` }
+                });
+                if (fallbackRes.status === 200) {
+                    const fallbackData = await fallbackRes.json();
+                    if (fallbackData.data && fallbackData.data.length > 0) {
+                        existingId = fallbackData.data[0].id;
+                        console.log(`Zoho [${module}]: Found record via fallback ID: ${existingId}`);
+                    }
+                }
+            } catch (e) {
+                console.error(`Zoho [${module}]: Fallback search failed:`, e);
+            }
+        }
     }
 
     // 2. Perform Upsert
