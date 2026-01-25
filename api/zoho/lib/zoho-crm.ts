@@ -22,7 +22,7 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         External_ID: data.internalPracticeId, // Custom field assumption
         Phone: data.providerPhone,
         Billing_Street: data.providerAddress
-    }, `(Account_Name:${encodeURIComponent(data.practiceName)})`);
+    }, `(Account_Name:equals:${encodeURIComponent(data.practiceName)})`);
 
     // 2. UPSERT CONTACT (The Provider)
     const contactId = await upsertRecord(apiDomain, accessToken, 'Contacts', {
@@ -33,7 +33,7 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         Phone: data.providerPhone,
         Mailing_Street: data.providerAddress,
         NPI: data.providerNpi // Custom field assumption
-    }, `(Email:${encodeURIComponent(data.providerEmail)})`);
+    }, `(Email:equals:${encodeURIComponent(data.providerEmail)})`);
 
     // 3. UPSERT DEAL (The Onboarding Process)
     // A Deal is usually unique per Account or per Onboarding session
@@ -48,7 +48,7 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         Onboarding_Status: data.onboardingStatus,
         Contract_Status: data.contractStatus,
         Internal_ID: data.internalPracticeId // Custom field to track link
-    }, `(Deal_Name:${encodeURIComponent(dealName)})`);
+    }, `(Deal_Name:equals:${encodeURIComponent(dealName)})`);
 
     return { accountId, contactId, dealId };
 }
@@ -86,8 +86,9 @@ async function upsertRecord(domain: string, token: string, module: string, data:
     if (result.data && result.data[0].status === 'success') {
         return result.data[0].details.id;
     } else {
-        console.error(`Zoho ${module} Error:`, JSON.stringify(result));
-        throw new Error(`Failed to upsert ${module} record in Zoho`);
+        const zohoError = result.data?.[0]?.message || JSON.stringify(result);
+        console.error(`Zoho ${module} Error:`, zohoError);
+        throw new Error(`Zoho API [${module}]: ${zohoError}. Tip: Ensure custom fields (NPI, Internal_ID, etc.) are created in Zoho CRM.`);
     }
 }
 
