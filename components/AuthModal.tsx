@@ -10,6 +10,7 @@ interface AuthModalProps {
 
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initialMode = 'login' }) => {
     const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
+    const [error, setError] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -20,11 +21,13 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initi
 
     useEffect(() => {
         setMode(initialMode);
+        setError(null);
     }, [initialMode]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+        if (error) setError(null);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -48,12 +51,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initi
                     role: user.role
                 });
             } else {
-                alert('Invalid credentials. Try: admin@itera.health / callcenter@itera.health / practice@itera.health with password: 123');
+                setError('Invalid credentials. Please check your email and password.');
             }
         } else {
             // Signup mode - create new user as Practice Staff
             if (formData.password !== formData.confirmPassword) {
-                alert('Passwords do not match. Please try again.');
+                setError('Passwords do not match. Please try again.');
                 return;
             }
 
@@ -101,18 +104,30 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess, initi
 
                     <div className="flex p-1 bg-gray-100 rounded-2xl mb-8 gap-1">
                         <button
-                            onClick={() => setMode('login')}
+                            onClick={() => { setMode('login'); setError(null); }}
                             className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${mode === 'login' ? 'bg-white text-itera-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Log In
                         </button>
                         <button
-                            onClick={() => setMode('signup')}
+                            onClick={() => { setMode('signup'); setError(null); }}
                             className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${mode === 'signup' ? 'bg-white text-itera-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                         >
                             Sign Up
                         </button>
                     </div>
+
+                    {error && (
+                        <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-start gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+                            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <XIcon className="w-3 h-3 text-white" />
+                            </div>
+                            <div>
+                                <h4 className="text-xs font-bold text-red-600 uppercase tracking-wider mb-1">Attention Required</h4>
+                                <p className="text-sm text-red-800 font-medium leading-tight">{error}</p>
+                            </div>
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {mode === 'signup' && (

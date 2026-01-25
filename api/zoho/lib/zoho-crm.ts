@@ -21,6 +21,9 @@ export interface ZohoSyncData {
     onboardingStatus: string;
     contractStatus?: string;
     assignmentRules?: ZohoAssignmentRule[];
+    accountId?: string;
+    contactId?: string;
+    dealId?: string;
 }
 
 export async function upsertZohoHierarchy(data: ZohoSyncData) {
@@ -34,7 +37,6 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
     const ownerField = targetOwner ? { Owner: { id: targetOwner } } : {};
 
     // 1. UPSERT ACCOUNT (The Practice)
-    // We try to find by External_ID first, then by Name if that fails
     const accountId = await upsertRecord(apiDomain, accessToken, 'Accounts', {
         Account_Name: data.practiceName || 'New Practice',
         External_ID: data.internalPracticeId,
@@ -43,7 +45,7 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         Billing_Street: data.providerAddress,
         Shipping_Street: data.providerAddress,
         ...ownerField
-    }, `(External_ID:equals:${encodeURIComponent(data.internalPracticeId)})`);
+    }, `(External_ID:equals:${encodeURIComponent(data.internalPracticeId)})`, data.accountId);
 
     // 2. UPSERT CONTACT (The Provider)
     const contactId = await upsertRecord(apiDomain, accessToken, 'Contacts', {
@@ -57,7 +59,7 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         Other_Street: data.providerAddress,
         NPI: data.providerNpi,
         ...ownerField
-    }, `(Email:equals:${encodeURIComponent(data.providerEmail)})`);
+    }, `(Email:equals:${encodeURIComponent(data.providerEmail)})`, data.contactId);
 
     // 3. UPSERT DEAL (The Onboarding Process)
     const dealName = `Onboarding - ${data.practiceName || data.providerName}`;
@@ -74,7 +76,7 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         Other_Potential: data.otherPotential,
         Internal_ID: data.internalPracticeId,
         ...ownerField
-    }, `(Internal_ID:equals:${encodeURIComponent(data.internalPracticeId)})`);
+    }, `(Internal_ID:equals:${encodeURIComponent(data.internalPracticeId)})`, data.dealId);
 
     return { accountId, contactId, dealId };
 }
@@ -121,26 +123,30 @@ function mapUserToZohoId(userName: string): string | null {
     return mappings[userName] || null;
 }
 
-async function upsertRecord(domain: string, token: string, module: string, data: any, searchCriteria: string): Promise<string> {
-    console.log(`Zoho [${module}]: Attempting upsert with criteria: ${searchCriteria}`);
+async function upsertRecord(domain: string, token: string, module: string, data: any, searchCriteria: string, explicitId?: string): Promise<string> {
+    console.log(`Zoho [${module}]: Attempting upsert. Explicit ID: ${explicitId || 'None'}. Criteria: ${searchCriteria}`);
 
-    // 1. Primary search criteria
-    let existingId = null;
-    try {
-        const searchUrl = `${domain}/${module}/search?criteria=${encodeURIComponent(searchCriteria)}`;
-        const searchRes = await fetch(searchUrl, {
-            headers: { 'Authorization': `Zoho-oauthtoken ${token}` }
-        });
+    // Prioritize explicit ID if provided
+    let existingId = explicitId || null;
 
-        if (searchRes.status === 200) {
-            const searchData = await searchRes.json();
-            if (searchData.data && searchData.data.length > 0) {
-                existingId = searchData.data[0].id;
-                console.log(`Zoho [${module}]: Found existing record with ID: ${existingId}`);
+    // 1. Primary search criteria if no explicit ID
+    if (!existingId) {
+        try {
+            const searchUrl = `${domain}/${module}/search?criteria=${encodeURIComponent(searchCriteria)}`;
+            const searchRes = await fetch(searchUrl, {
+                headers: { 'Authorization': `Zoho-oauthtoken ${token}` }
+            });
+
+            if (searchRes.status === 200) {
+                const searchData = await searchRes.json();
+                if (searchData.data && searchData.data.length > 0) {
+                    existingId = searchData.data[0].id;
+                    console.log(`Zoho [${module}]: Found existing record with ID: ${existingId}`);
+                }
             }
+        } catch (e) {
+            console.error(`Zoho [${module}]: Primary search failed:`, e);
         }
-    } catch (e) {
-        console.error(`Zoho [${module}]: Primary search failed:`, e);
     }
 
     // 2. Secondary search fallback (by Name/Email) if primary failed or returned nothing

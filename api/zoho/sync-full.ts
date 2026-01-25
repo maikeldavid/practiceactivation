@@ -22,7 +22,10 @@ export default async function handler(
         status,
         contractStatus,
         internalId,
-        assignmentRules
+        assignmentRules,
+        accountId,
+        contactId,
+        dealId
     } = req.body;
 
     console.log('Zoho Sync Payload Received:', {
@@ -53,7 +56,10 @@ export default async function handler(
             otherPotential: otherPotential,
             onboardingStatus: status || 'Initiated',
             contractStatus: contractStatus || 'Pending',
-            assignmentRules: assignmentRules
+            assignmentRules: assignmentRules,
+            accountId,
+            contactId,
+            dealId
         });
 
         return res.status(200).json({

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import type { Program, MockPatient } from '../../types';
-import { Logo, LogOutIcon, LayoutDashboard, ClipboardListIcon, UsersIcon, BarChart3, Settings, FolderIcon, HeadsetIcon, Bell, UserIcon, ChevronDown } from '../IconComponents';
+import { Logo, LogOutIcon, LayoutDashboard, ClipboardListIcon, UsersIcon, BarChart3, Settings, FolderIcon, HeadsetIcon, Bell, UserIcon, ChevronDown, ShieldCheckIcon } from '../IconComponents';
 import SettingsModal from '../SettingsModal';
 import { DEFAULT_ROLES } from '../../constants';
 import type { ContactInfo } from '../../types';
@@ -17,10 +17,11 @@ import DocumentsView from './DocumentsView';
 import ProviderProfileView from './ProviderProfileView';
 import DocumentSigningView from './DocumentSigningView';
 import UserProfileView from './UserProfileView';
+import ResponsibilityMatrixView from './ResponsibilityMatrixView';
 import type { EHRConfig, TrainingMeeting, ZohoAssignmentRule, PracticeProfile } from '../../types';
 
 
-type View = 'dashboard' | 'onboarding' | 'patients' | 'analytics' | 'documents' | 'team' | 'ehr' | 'training' | 'outreach' | 'provider-profile' | 'document-signing' | 'user-profile';
+type View = 'dashboard' | 'onboarding' | 'patients' | 'analytics' | 'documents' | 'team' | 'ehr' | 'training' | 'outreach' | 'provider-profile' | 'document-signing' | 'user-profile' | 'responsibility-matrix';
 
 interface ActivationPortalProps {
   isOpen: boolean;
@@ -65,6 +66,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
   ]);
   const [enableCustomRules, setEnableCustomRules] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [zohoIds, setZohoIds] = useState<{ accountId?: string; contactId?: string; dealId?: string }>({});
 
   if (!isOpen) return null;
 
@@ -98,25 +100,25 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           status: statusText,
           assignmentRules: enableCustomRules ? assignmentRules : [],
           // Add nested metadata for future backend use
+          ...zohoIds, // Pass existing IDs if we have them
           healthcareData: activeProfile,
           ...extraData
         })
       });
 
-      let errorData;
-      const contentType = response.headers.get("content-type");
-      if (contentType && contentType.indexOf("application/json") !== -1) {
-        errorData = await response.json();
-      } else {
-        const text = await response.text();
-        console.error('Server returned non-JSON response:', text);
-        errorData = { message: `Server Error (HTML): ${text.substring(0, 100)}...` };
-      }
+      const responseData = await response.json();
 
       if (!response.ok) {
-        console.error('Zoho Sync Error:', errorData);
+        console.error('Zoho Sync Error:', responseData);
       } else {
-        console.log('Zoho Sync Successful');
+        console.log('Zoho Sync Successful', responseData);
+        // Store IDs for future updates
+        if (responseData.details) {
+          setZohoIds(prev => ({
+            ...prev,
+            ...responseData.details
+          }));
+        }
       }
     } catch (error) {
       console.error('Critical Connection Error:', error);
@@ -338,6 +340,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             onCancel={() => setActiveView('onboarding')}
           />
         );
+      case 'responsibility-matrix':
+        return <ResponsibilityMatrixView />;
       default:
         return <DashboardView patients={patientList} />;
     }
@@ -358,6 +362,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             <NavItem view="outreach" icon={HeadsetIcon} label="Daily Outreach Plan" />
             <NavItem view="patients" icon={UsersIcon} label="Patient Management" />
             <NavItem view="analytics" icon={BarChart3} label="Enrollment Analytics" />
+            <NavItem view="responsibility-matrix" icon={ShieldCheckIcon} label="Matriz de Responsabilidades" />
             <NavItem view="documents" icon={FolderIcon} label="Document Library" />
             <NavItem view="team" icon={Settings} label="Care Team Setup" />
           </nav>

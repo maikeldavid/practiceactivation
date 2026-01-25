@@ -51,7 +51,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ initialData, onSave, 
 
             <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl border border-gray-200 shadow-sm space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="md:col-span-2">
+                    <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                             <UserIcon className="w-4 h-4 text-itera-blue" />
                             Full Name *
@@ -65,6 +65,20 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ initialData, onSave, 
                             placeholder="Your full name"
                         />
                         {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                            <ShieldCheckIcon className="w-4 h-4 text-itera-blue" />
+                            Practice Role
+                        </label>
+                        <input
+                            type="text"
+                            value={formData.role}
+                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all"
+                            placeholder="e.g. Practice Staff"
+                        />
                     </div>
 
                     <div>
@@ -111,19 +125,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ initialData, onSave, 
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
-                            <ShieldCheckIcon className="w-4 h-4 text-itera-blue" />
-                            Portal Role
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.role}
-                            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all"
-                            placeholder="e.g. Practice Staff"
-                        />
-                    </div>
+
                 </div>
 
                 <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
