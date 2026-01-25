@@ -25,6 +25,16 @@ export default async function handler(
         assignmentRules
     } = req.body;
 
+    console.log('Zoho Sync Payload Received:', {
+        practiceName,
+        providerEmail,
+        phone,
+        address,
+        npi,
+        website,
+        internalId
+    });
+
     if (!practiceName || !providerEmail) {
         return res.status(400).json({ error: 'Missing required sync data' });
     }

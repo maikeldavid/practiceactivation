@@ -27,17 +27,21 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
     const accessToken = await getZohoAccessToken();
     const apiDomain = getZohoApiDomain();
 
+    console.log(`Starting Upsert Hierarchy for: ${data.practiceName} (${data.internalPracticeId})`);
+
     // Determine Owner based on Assignment Rules
     const targetOwner = evaluateAssignmentRules(data);
     const ownerField = targetOwner ? { Owner: { id: targetOwner } } : {};
 
     // 1. UPSERT ACCOUNT (The Practice)
+    // We try to find by External_ID first, then by Name if that fails
     const accountId = await upsertRecord(apiDomain, accessToken, 'Accounts', {
         Account_Name: data.practiceName || 'New Practice',
         External_ID: data.internalPracticeId,
         Phone: data.providerPhone,
-        Billing_Street: data.providerAddress,
         Website: data.providerURL,
+        Billing_Street: data.providerAddress,
+        Shipping_Street: data.providerAddress,
         ...ownerField
     }, `(External_ID:equals:${encodeURIComponent(data.internalPracticeId)})`);
 
@@ -48,7 +52,9 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         Email: data.providerEmail,
         Account_Name: { id: accountId },
         Phone: data.providerPhone,
+        Mobile: data.providerPhone,
         Mailing_Street: data.providerAddress,
+        Other_Street: data.providerAddress,
         NPI: data.providerNpi,
         ...ownerField
     }, `(Email:equals:${encodeURIComponent(data.providerEmail)})`);
@@ -116,24 +122,36 @@ function mapUserToZohoId(userName: string): string | null {
 }
 
 async function upsertRecord(domain: string, token: string, module: string, data: any, searchCriteria: string): Promise<string> {
-    // 1. Search first to see if record exists
-    const searchUrl = `${domain}/${module}/search?criteria=${searchCriteria}`;
-    const searchRes = await fetch(searchUrl, {
-        headers: { 'Authorization': `Zoho-oauthtoken ${token}` }
-    });
+    console.log(`Zoho [${module}]: Attempting upsert with criteria: ${searchCriteria}`);
 
+    // 1. Search first to see if record exists
     let existingId = null;
-    if (searchRes.status === 200) {
-        const searchData = await searchRes.json();
-        if (searchData.data && searchData.data.length > 0) {
-            existingId = searchData.data[0].id;
+    const searchUrl = `${domain}/${module}/search?criteria=${encodeURI(searchCriteria)}`;
+
+    try {
+        const searchRes = await fetch(searchUrl, {
+            headers: { 'Authorization': `Zoho-oauthtoken ${token}` }
+        });
+
+        if (searchRes.status === 200) {
+            const searchData = await searchRes.json();
+            if (searchData.data && searchData.data.length > 0) {
+                existingId = searchData.data[0].id;
+                console.log(`Zoho [${module}]: Found existing record with ID: ${existingId}`);
+            }
+        } else {
+            console.warn(`Zoho [${module}]: Search failed with status ${searchRes.status}. Proceeding as new record.`);
         }
+    } catch (e) {
+        console.error(`Zoho [${module}]: Search error:`, e);
     }
 
     // 2. Perform Upsert
     const payload = { data: [data] };
     const method = existingId ? 'PUT' : 'POST';
     const url = existingId ? `${domain}/${module}/${existingId}` : `${domain}/${module}`;
+
+    console.log(`Zoho [${module}]: Sending ${method} request to ${url}`);
 
     const upsertRes = await fetch(url, {
         method,
@@ -147,28 +165,46 @@ async function upsertRecord(domain: string, token: string, module: string, data:
     const result = await upsertRes.json();
 
     // 3. Handle Result
-    if (result.data && result.data[0].status === 'success') {
-        return result.data[0].details.id;
+    if (result.data && result.data[0] && result.data[0].status === 'success') {
+        const newId = result.data[0].details.id;
+        console.log(`Zoho [${module}]: Upsert successful. ID: ${newId}`);
+        return newId;
     }
 
-    // 4. SMART FALLBACK: If a field is invalid/missing in Zoho (like a custom field not yet created)
+    // 4. SMART FALLBACK: If a field is invalid/missing in Zoho
     const firstError = result.data?.[0];
     if (firstError?.code === 'INVALID_DATA' && firstError?.details?.api_name) {
         const invalidField = firstError.details.api_name;
-        console.warn(`Zoho [${module}]: Field '${invalidField}' is invalid. Retrying without it...`);
+        console.warn(`Zoho [${module}]: Field '${invalidField}' is invalid in Zoho. Retrying without it...`);
 
         const newData = { ...data };
         delete newData[invalidField];
 
+        // Clean up search criteria if it depends on the invalid field
+        let newCriteria = searchCriteria;
+        if (searchCriteria.includes(invalidField)) {
+            console.warn(`Zoho [${module}]: Search criteria depends on invalid field '${invalidField}'. Falling back to Name-based search.`);
+            if (module === 'Accounts' && data.Account_Name) {
+                newCriteria = `(Account_Name:equals:${encodeURIComponent(data.Account_Name)})`;
+            } else if (module === 'Contacts' && data.Last_Name) {
+                newCriteria = `(Last_Name:equals:${encodeURIComponent(data.Last_Name)})`;
+            } else if (module === 'Deals' && data.Deal_Name) {
+                newCriteria = `(Deal_Name:equals:${encodeURIComponent(data.Deal_Name)})`;
+            } else {
+                newCriteria = `(id:equals:0)`; // Force skip search
+            }
+        }
+
         if (Object.keys(newData).length > 0) {
-            return upsertRecord(domain, token, module, newData, searchCriteria);
+            return upsertRecord(domain, token, module, newData, newCriteria);
         }
     }
 
     // 5. FINAL ERROR REPORTING
     const errorMsg = result.data?.[0]?.message || JSON.stringify(result);
-    const detailMsg = `Zoho [${module}] Sync Failed: ${errorMsg}. Data sent: ${JSON.stringify(data)}`;
+    const detailMsg = `Zoho [${module}] Sync Failed: ${errorMsg}. Response: ${JSON.stringify(result)}`;
     console.error(detailMsg);
+    console.error(`Data sent was: ${JSON.stringify(data)}`);
     throw new Error(detailMsg);
 }
 
