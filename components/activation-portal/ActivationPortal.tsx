@@ -66,6 +66,10 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       const providerEmail = providerProfile?.providerEmail || practiceInfo.email;
       const providerName = providerProfile?.providerName || practiceInfo.name;
 
+      const currentStep = completedSteps.size > 0 ? Math.max(...Array.from(completedSteps) as number[]) : 0;
+      const statusText = currentStep > 0 ? `Step ${currentStep} Completed` : 'Initiated';
+
+      console.log('--- Starting Zoho Sync ---');
       const response = await fetch('/api/zoho/sync-full', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -76,8 +80,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           phone: providerProfile?.providerPhone,
           address: providerProfile?.providerAddress,
           npi: providerProfile?.providerNPI,
-          internalId: practiceInfo.email, // Using email as internal identifier
-          status: completedSteps.size > 0 ? `Step ${Math.max(...Array.from(completedSteps) as number[])} Completed` : 'Initiated',
+          internalId: practiceInfo.email,
+          status: statusText,
           ...extraData
         })
       });
@@ -85,12 +89,13 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Zoho Sync Error:', errorData);
-        // Show alert to user so they can report the error EXACTLY
-        alert(`Zoho Sync Error: ${errorData.message || errorData.error || 'Unknown error'}`);
+        alert(`Zoho Sync Failed: ${errorData.message || errorData.error || 'Check Vercel logs'}`);
+      } else {
+        console.log('Zoho Sync Successful');
       }
     } catch (error) {
-      console.error('Failed to sync with Zoho:', error);
-      alert(`Critical Connection Error: ${error instanceof Error ? error.message : 'The server could not be reached'}`);
+      console.error('Critical Connection Error:', error);
+      alert(`Critical Sync Error: ${error instanceof Error ? error.message : 'Connection failed'}`);
     }
   };
 
