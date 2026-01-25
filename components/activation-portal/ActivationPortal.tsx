@@ -92,6 +92,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         alert(`Zoho Sync Failed: ${errorData.message || errorData.error || 'Check Vercel logs'}`);
       } else {
         console.log('Zoho Sync Successful');
+        // Add a visible confirmation for debugging
+        alert('Sincronización con Zoho completada con éxito.');
       }
     } catch (error) {
       console.error('Critical Connection Error:', error);
