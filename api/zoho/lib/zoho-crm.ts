@@ -18,8 +18,8 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
 
     // 1. UPSERT ACCOUNT (The Practice)
     const accountId = await upsertRecord(apiDomain, accessToken, 'Accounts', {
-        Account_Name: data.practiceName,
-        External_ID: data.internalPracticeId, // Custom field assumption
+        Account_Name: data.practiceName || 'New Practice',
+        External_ID: data.internalPracticeId,
         Phone: data.providerPhone,
         Billing_Street: data.providerAddress
     }, `(Account_Name:equals:${encodeURIComponent(data.practiceName)})`);
@@ -27,27 +27,26 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
     // 2. UPSERT CONTACT (The Provider)
     const contactId = await upsertRecord(apiDomain, accessToken, 'Contacts', {
         First_Name: data.providerName.split(' ')[0],
-        Last_Name: data.providerName.split(' ').slice(1).join(' ') || data.providerName,
+        Last_Name: data.providerName.split(' ').slice(1).join(' ') || data.providerName || 'Provider',
         Email: data.providerEmail,
-        Account_Name: accountId, // Link to Account
+        Account_Name: { id: accountId }, // Link to Account using Object format
         Phone: data.providerPhone,
         Mailing_Street: data.providerAddress,
-        NPI: data.providerNpi // Custom field assumption
+        NPI: data.providerNpi
     }, `(Email:equals:${encodeURIComponent(data.providerEmail)})`);
 
     // 3. UPSERT DEAL (The Onboarding Process)
-    // A Deal is usually unique per Account or per Onboarding session
-    const dealName = `Onboarding - ${data.practiceName}`;
+    const dealName = `Onboarding - ${data.practiceName || data.providerName}`;
     const dealId = await upsertRecord(apiDomain, accessToken, 'Deals', {
         Deal_Name: dealName,
-        Account_Name: accountId,
-        Contact_Name: contactId,
+        Account_Name: { id: accountId }, // Link to Account
+        Contact_Name: { id: contactId }, // Link to Contact
         Stage: mapStatusToStage(data.onboardingStatus, data.contractStatus),
         Amount: 0,
         Closing_Date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
         Onboarding_Status: data.onboardingStatus,
         Contract_Status: data.contractStatus,
-        Internal_ID: data.internalPracticeId // Custom field to track link
+        Internal_ID: data.internalPracticeId
     }, `(Deal_Name:equals:${encodeURIComponent(dealName)})`);
 
     return { accountId, contactId, dealId };
