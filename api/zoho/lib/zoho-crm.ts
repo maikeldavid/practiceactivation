@@ -61,8 +61,10 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         ...ownerField
     }, `(Email:equals:${encodeURIComponent(data.providerEmail)})`, data.contactId);
 
-    // 3. UPSERT DEAL (The Onboarding Process)
-    const dealName = `Onboarding - ${data.practiceName || data.providerName}`;
+    // 3. UPSERT DEAL (The Onboarding/Qualification Process)
+    const isSigned = data.contractStatus === 'Signed';
+    const prefix = isSigned ? 'Onboarding' : 'Qualification';
+    const dealName = `${prefix} - ${data.practiceName || data.providerName}`;
     const dealId = await upsertRecord(apiDomain, accessToken, 'Deals', {
         Deal_Name: dealName,
         Account_Name: { id: accountId },
