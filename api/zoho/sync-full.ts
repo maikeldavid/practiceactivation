@@ -16,6 +16,9 @@ export default async function handler(
         phone,
         address,
         npi,
+        website,
+        medicarePotential,
+        otherPotential,
         status,
         contractStatus,
         internalId
@@ -28,12 +31,15 @@ export default async function handler(
     try {
         const result = await upsertZohoHierarchy({
             practiceName,
-            internalPracticeId: internalId || providerEmail, // Fallback if no ID
+            internalPracticeId: internalId || providerEmail,
             providerName,
             providerEmail,
             providerPhone: phone,
             providerAddress: address,
             providerNpi: npi,
+            providerURL: website,
+            medicarePotential: medicarePotential,
+            otherPotential: otherPotential,
             onboardingStatus: status || 'Initiated',
             contractStatus: contractStatus || 'Pending'
         });

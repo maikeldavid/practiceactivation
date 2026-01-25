@@ -8,6 +8,9 @@ export interface ZohoSyncData {
     providerPhone?: string;
     providerAddress?: string;
     providerNpi?: string;
+    providerURL?: string;
+    medicarePotential?: string;
+    otherPotential?: string;
     onboardingStatus: string;
     contractStatus?: string;
 }
@@ -21,7 +24,8 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         Account_Name: data.practiceName || 'New Practice',
         External_ID: data.internalPracticeId,
         Phone: data.providerPhone,
-        Billing_Street: data.providerAddress
+        Billing_Street: data.providerAddress,
+        Website: data.providerURL
     }, `(Account_Name:equals:${encodeURIComponent(data.practiceName)})`);
 
     // 2. UPSERT CONTACT (The Provider)
@@ -46,6 +50,8 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
         Closing_Date: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
         Onboarding_Status: data.onboardingStatus,
         Contract_Status: data.contractStatus,
+        Medicare_Potential: data.medicarePotential,
+        Other_Potential: data.otherPotential,
         Internal_ID: data.internalPracticeId
     }, `(Deal_Name:equals:${encodeURIComponent(dealName)})`);
 
@@ -111,8 +117,18 @@ async function upsertRecord(domain: string, token: string, module: string, data:
 
 
 function mapStatusToStage(onboardingStatus: string, contractStatus?: string): string {
-    if (contractStatus === 'Signed') return 'Closed Won';
-    if (onboardingStatus.includes('Step 2')) return 'Ready for contract'; // This triggers the Zoho Workflow
-    if (onboardingStatus.includes('Step')) return 'Qualification';
-    return 'New Business';
+    const isContractSigned = contractStatus === 'Signed';
+
+    // Before Contract is signed
+    if (!isContractSigned) {
+        if (onboardingStatus.includes('Step 2')) return 'Ready for contract';
+        return 'Qualification';
+    }
+
+    // After Contract is signed -> Onboarding Starts
+    if (onboardingStatus.includes('Step 5')) return 'Closed Won / Live';
+    if (onboardingStatus.includes('Step 4')) return 'Onboarding - EHR Configuration';
+    if (onboardingStatus.includes('Step 3')) return 'Onboarding - Care Team Setup';
+
+    return 'Contract Signed / Onboarding Start';
 }

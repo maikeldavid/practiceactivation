@@ -47,6 +47,9 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
     providerPhone: string;
     providerEmail: string;
     providerNPI: string;
+    providerURL?: string;
+    medicareFFSPatients?: string;
+    otherPatients?: string;
     careTeamMembers: { id: string; name: string; role: string; email: string }[];
   } | null>(null);
   const [documentsSignedStatus, setDocumentsSignedStatus] = useState(false);
@@ -80,6 +83,9 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           phone: providerProfile?.providerPhone,
           address: providerProfile?.providerAddress,
           npi: providerProfile?.providerNPI,
+          website: providerProfile?.providerURL,
+          medicarePotential: providerProfile?.medicareFFSPatients,
+          otherPotential: providerProfile?.otherPatients,
           internalId: practiceInfo.email,
           status: statusText,
           ...extraData
@@ -280,7 +286,10 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
                   status: 'Step 1 Completed (Provider Profile)',
                   phone: data.providerPhone,
                   address: data.providerAddress,
-                  npi: data.providerNPI
+                  npi: data.providerNPI,
+                  website: data.providerURL,
+                  medicarePotential: data.medicareFFSPatients,
+                  otherPotential: data.otherPatients
                 });
                 return next;
               });

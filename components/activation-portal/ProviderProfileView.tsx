@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircleIcon, HomeIcon, MapPinIcon, MailIcon, UsersIcon, Trash2Icon } from '../IconComponents';
+import { CheckCircleIcon, HomeIcon, MapPinIcon, MailIcon, UsersIcon, Trash2Icon, GlobeIcon } from '../IconComponents';
 
 interface CareTeamMember {
     id: string;
@@ -15,6 +15,9 @@ interface ProviderProfileViewProps {
         providerPhone: string;
         providerEmail: string;
         providerNPI: string;
+        providerURL?: string;
+        medicareFFSPatients?: string;
+        otherPatients?: string;
         careTeamMembers: CareTeamMember[];
     };
     onSave: (data: {
@@ -23,6 +26,9 @@ interface ProviderProfileViewProps {
         providerPhone: string;
         providerEmail: string;
         providerNPI: string;
+        providerURL?: string;
+        medicareFFSPatients?: string;
+        otherPatients?: string;
         careTeamMembers: CareTeamMember[];
     }) => void;
     onCancel?: () => void;
@@ -34,7 +40,10 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         providerAddress: initialData?.providerAddress || '',
         providerPhone: initialData?.providerPhone || '',
         providerEmail: initialData?.providerEmail || '',
-        providerNPI: initialData?.providerNPI || ''
+        providerNPI: initialData?.providerNPI || '',
+        providerURL: initialData?.providerURL || '',
+        medicareFFSPatients: initialData?.medicareFFSPatients || '',
+        otherPatients: initialData?.otherPatients || ''
     });
 
     const [careTeamMembers, setCareTeamMembers] = useState<CareTeamMember[]>(
@@ -71,6 +80,10 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
             newErrors.providerNPI = 'Provider NPI is required';
         } else if (!/^\d{10}$/.test(formData.providerNPI.replace(/\s/g, ''))) {
             newErrors.providerNPI = 'NPI must be 10 digits';
+        }
+
+        if (formData.providerURL.trim() && !/^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/.test(formData.providerURL)) {
+            newErrors.providerURL = 'Please enter a valid URL';
         }
 
         setErrors(newErrors);
@@ -212,7 +225,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                         <div className="md:col-span-2">
                             <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                                 <span className="text-itera-blue">🏥</span>
-                                Provider NPI (National Provider Identifier) *
+                                Provider NPI *
                             </label>
                             <input
                                 type="text"
@@ -220,12 +233,61 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                 onChange={(e) => handleChange('providerNPI', e.target.value.replace(/\D/g, '').slice(0, 10))}
                                 className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all ${errors.providerNPI ? 'border-red-300 bg-red-50' : 'border-gray-300'
                                     }`}
-                                placeholder="1234567890 (10 digits)"
+                                placeholder="1234567890"
                                 maxLength={10}
                             />
                             {errors.providerNPI && (
                                 <p className="mt-1 text-sm text-red-600">{errors.providerNPI}</p>
                             )}
+                        </div>
+
+                        {/* Provider URL */}
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                <GlobeIcon className="w-4 h-4 text-itera-blue" />
+                                Website URL (Optional)
+                            </label>
+                            <input
+                                type="text"
+                                value={formData.providerURL}
+                                onChange={(e) => handleChange('providerURL', e.target.value)}
+                                className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all ${errors.providerURL ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                                    }`}
+                                placeholder="https://example.com"
+                            />
+                            {errors.providerURL && (
+                                <p className="mt-1 text-sm text-red-600">{errors.providerURL}</p>
+                            )}
+                        </div>
+
+                        {/* Patient Potential Section */}
+                        <div className="md:col-span-4 grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                    <UsersIcon className="w-4 h-4 text-itera-blue" />
+                                    Medicare FFS Patients
+                                </label>
+                                <input
+                                    type="number"
+                                    value={formData.medicareFFSPatients}
+                                    onChange={(e) => handleChange('medicareFFSPatients', e.target.value)}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all"
+                                    placeholder="e.g. 500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                                    <UsersIcon className="w-4 h-4 text-itera-blue" />
+                                    Other Patients
+                                </label>
+                                <input
+                                    type="number"
+                                    value={formData.otherPatients}
+                                    onChange={(e) => handleChange('otherPatients', e.target.value)}
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all"
+                                    placeholder="e.g. 1000"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
