@@ -54,7 +54,7 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
 }
 
 async function upsertRecord(domain: string, token: string, module: string, data: any, searchCriteria: string): Promise<string> {
-    // Search first
+    // 1. Search first to see if record exists
     const searchUrl = `${domain}/${module}/search?criteria=${searchCriteria}`;
     const searchRes = await fetch(searchUrl, {
         headers: { 'Authorization': `Zoho-oauthtoken ${token}` }
@@ -68,6 +68,7 @@ async function upsertRecord(domain: string, token: string, module: string, data:
         }
     }
 
+    // 2. Perform Upsert
     const payload = { data: [data] };
     const method = existingId ? 'PUT' : 'POST';
     const url = existingId ? `${domain}/${module}/${existingId}` : `${domain}/${module}`;
@@ -83,13 +84,31 @@ async function upsertRecord(domain: string, token: string, module: string, data:
 
     const result = await upsertRes.json();
 
+    // 3. Handle Result
     if (result.data && result.data[0].status === 'success') {
         return result.data[0].details.id;
-    } else {
-        const zohoError = result.data?.[0]?.message || JSON.stringify(result);
-        console.error(`Zoho ${module} Error:`, zohoError);
-        throw new Error(`Zoho API [${module}]: ${zohoError}. Tip: Ensure custom fields (NPI, Internal_ID, etc.) are created in Zoho CRM.`);
     }
+
+    // 4. SMART FALLBACK: If a field is invalid/missing in Zoho (like a custom field not yet created), 
+    // remove it and try again automatically.
+    const firstError = result.data?.[0];
+    if (firstError?.code === 'INVALID_DATA' && firstError?.details?.api_name) {
+        const invalidField = firstError.details.api_name;
+        console.warn(`Zoho [${module}]: Field '${invalidField}' is invalid. Retrying without it...`);
+
+        const newData = { ...data };
+        delete newData[invalidField];
+
+        // If we still have data to send, retry recursively
+        if (Object.keys(newData).length > 0) {
+            return upsertRecord(domain, token, module, newData, searchCriteria);
+        }
+    }
+
+    // If it's another type of error or we can't retry
+    const errorMsg = result.data?.[0]?.message || JSON.stringify(result);
+    console.error(`Zoho ${module} Final Error:`, errorMsg);
+    throw new Error(`Zoho API [${module}]: ${errorMsg}`);
 }
 
 function mapStatusToStage(onboardingStatus: string, contractStatus?: string): string {
