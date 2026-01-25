@@ -90,6 +90,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       }
     } catch (error) {
       console.error('Failed to sync with Zoho:', error);
+      alert(`Critical Connection Error: ${error instanceof Error ? error.message : 'The server could not be reached'}`);
     }
   };
 
