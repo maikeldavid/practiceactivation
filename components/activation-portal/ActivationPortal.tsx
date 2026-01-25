@@ -102,8 +102,10 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           practiceName: activeProfile?.name || practiceInfo.practiceName,
           providerName: physicianName,
           providerEmail: physicianEmail,
-          phone: activeProfile?.physician.phone || activeProfile?.locations[0]?.phone,
-          address: activeProfile?.locations[0]?.address,
+          practicePhone: activeProfile?.locations[0]?.phone || userProfile.phone,
+          providerPhone: activeProfile?.physician.phone,
+          phone: activeProfile?.physician.phone || userProfile.phone || activeProfile?.locations[0]?.phone,
+          address: activeProfile?.locations[0]?.address || userProfile.address,
           npi: activeProfile?.physician.npi,
           website: activeProfile?.website,
           medicarePotential: activeProfile?.medicarePotential,
@@ -348,7 +350,9 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           <UserProfileView
             initialData={userProfile}
             onSave={(data) => {
-              setUserProfile(prev => ({ ...prev, ...data }));
+              const updatedProfile = { ...userProfile, ...data };
+              setUserProfile(updatedProfile);
+              syncWithZoho({ status: 'Updating User Personal Profile' });
               setActiveView('onboarding');
             }}
             onCancel={() => setActiveView('onboarding')}

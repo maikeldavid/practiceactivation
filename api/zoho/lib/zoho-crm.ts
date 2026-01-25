@@ -13,6 +13,7 @@ export interface ZohoSyncData {
     providerName: string;
     providerEmail: string;
     providerPhone?: string;
+    practicePhone?: string;
     providerAddress?: string;
     providerNpi?: string;
     providerURL?: string;
@@ -40,7 +41,7 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
     const accountId = await upsertRecord(apiDomain, accessToken, 'Accounts', {
         Account_Name: data.practiceName || 'New Practice',
         External_ID: data.internalPracticeId,
-        Phone: data.providerPhone,
+        Phone: data.practicePhone || data.providerPhone,
         Website: data.providerURL,
         Billing_Street: data.providerAddress,
         Shipping_Street: data.providerAddress,
@@ -48,9 +49,9 @@ export async function upsertZohoHierarchy(data: ZohoSyncData) {
     }, `(External_ID:equals:${encodeURIComponent(data.internalPracticeId)})`, data.accountId);
 
     // 2. UPSERT CONTACT (The Provider)
-    const nameParts = data.providerName.trim().split(/\s+/);
-    const firstName = nameParts.length > 1 ? nameParts[0] : '.';
-    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : nameParts[0] || 'Provider';
+    const nameParts = (data.providerName || '').trim().split(/\s+/);
+    const firstName = nameParts.length > 1 ? nameParts[0] : '';
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : (nameParts[0] || 'Provider');
 
     const contactId = await upsertRecord(apiDomain, accessToken, 'Contacts', {
         First_Name: firstName,

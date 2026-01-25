@@ -35,6 +35,17 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ initialData, onSave, 
         return Object.keys(newErrors).length === 0;
     };
 
+    const formatPhoneNumber = (value: string) => {
+        if (!value) return value;
+        const phoneNumber = value.replace(/[^\d]/g, '');
+        const phoneNumberLength = phoneNumber.length;
+        if (phoneNumberLength < 4) return phoneNumber;
+        if (phoneNumberLength < 7) {
+            return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+        }
+        return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)} ${phoneNumber.slice(6, 10)}`;
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (validate()) {
@@ -105,7 +116,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ initialData, onSave, 
                         <input
                             type="tel"
                             value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            onChange={(e) => setFormData({ ...formData, phone: formatPhoneNumber(e.target.value) })}
                             className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent transition-all"
                             placeholder="(555) 000-0000"
                         />
