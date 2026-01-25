@@ -76,8 +76,10 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
     try {
       setIsSyncing(true);
       const activeProfile = profileOverride || providerProfile;
-      const physicianEmail = activeProfile?.physician.email || practiceInfo.email;
-      const physicianName = activeProfile?.physician.name || practiceInfo.name;
+
+      // Identity Resolution: Prioritize clinical profile email, then personal profile, then signup email
+      const physicianEmail = activeProfile?.physician.email || userProfile.email || practiceInfo.email;
+      const physicianName = activeProfile?.physician.name || userProfile.name || practiceInfo.name;
 
       const currentStep = completedSteps.size > 0 ? Math.max(...Array.from(completedSteps) as number[]) : 0;
       const statusText = currentStep > 0 ? `Step ${currentStep} Completed` : 'Initiated';
