@@ -61,10 +61,39 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
 
   if (!isOpen) return null;
 
+  const syncWithZoho = async (extraData: any = {}) => {
+    try {
+      const [firstName, ...lastNameParts] = (practiceInfo.name || '').split(' ');
+      const lastName = lastNameParts.join(' ') || firstName;
+
+      await fetch('/api/zoho/sync-provider', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: practiceInfo.email,
+          firstName,
+          lastName,
+          practiceName: practiceInfo.practiceName,
+          phone: providerProfile?.providerPhone,
+          address: providerProfile?.providerAddress,
+          npi: providerProfile?.providerNPI,
+          status: completedSteps.size > 0 ? `Step ${Math.max(...Array.from(completedSteps) as number[])} Completed` : 'Initiated',
+          ...extraData
+        })
+      });
+    } catch (error) {
+      console.error('Failed to sync with Zoho:', error);
+    }
+  };
+
   // If provider profile is not complete, redirect to provider profile view
   React.useEffect(() => {
     if (isOpen && !providerProfile && activeView !== 'provider-profile') {
       setActiveView('provider-profile');
+    }
+
+    if (isOpen) {
+      syncWithZoho();
     }
   }, [isOpen, providerProfile, activeView]);
 
@@ -171,7 +200,11 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             roles={roles}
             setRoles={(newRoles) => {
               setRoles(newRoles);
-              setCompletedSteps(prev => new Set(prev).add(3));
+              setCompletedSteps(prev => {
+                const next = new Set(prev).add(3);
+                syncWithZoho({ status: 'Step 3 Completed (Care Team Setup)' });
+                return next;
+              });
             }}
             onCancel={() => setActiveView('onboarding')}
           />
@@ -182,7 +215,11 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             config={ehrConfig}
             onSave={(config) => {
               setEhrConfig(config);
-              setCompletedSteps(prev => new Set(prev).add(4));
+              setCompletedSteps(prev => {
+                const next = new Set(prev).add(4);
+                syncWithZoho({ status: 'Step 4 Completed (EHR Access)' });
+                return next;
+              });
               setActiveView('onboarding');
             }}
             onCancel={() => setActiveView('onboarding')}
@@ -194,7 +231,11 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             meeting={trainingMeeting}
             onSave={(meeting) => {
               setTrainingMeeting(meeting);
-              setCompletedSteps(prev => new Set(prev).add(5));
+              setCompletedSteps(prev => {
+                const next = new Set(prev).add(5);
+                syncWithZoho({ status: 'Step 5 Completed (Training Scheduled)' });
+                return next;
+              });
               setActiveView('onboarding');
             }}
             onCancel={() => setActiveView('onboarding')}
@@ -213,7 +254,16 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             initialData={providerProfile || undefined}
             onSave={(data) => {
               setProviderProfile(data);
-              setCompletedSteps(prev => new Set(prev).add(1));
+              setCompletedSteps(prev => {
+                const next = new Set(prev).add(1);
+                syncWithZoho({
+                  status: 'Step 1 Completed (Provider Profile)',
+                  phone: data.providerPhone,
+                  address: data.providerAddress,
+                  npi: data.providerNPI
+                });
+                return next;
+              });
               // Redirect to onboarding to continue with next steps
               setActiveView('onboarding');
             }}
@@ -227,7 +277,11 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             providerName={providerProfile?.providerName || practiceInfo.practiceName}
             onDocumentsSigned={() => {
               setDocumentsSignedStatus(true);
-              setCompletedSteps(prev => new Set(prev).add(2));
+              setCompletedSteps(prev => {
+                const next = new Set(prev).add(2);
+                syncWithZoho({ status: 'Step 2 Completed (Legal Documents Signed)', contractStatus: 'Signed' });
+                return next;
+              });
               setActiveView('onboarding');
             }}
           />
