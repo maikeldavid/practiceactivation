@@ -106,6 +106,7 @@ export interface ContactInfo {
   email: string;
   phone: string;
   isCustom?: boolean;
+  officeAssignments?: string[]; // IDs of PracticeLocations
 }
 export interface EHRConfig {
   ehrSystem: string;

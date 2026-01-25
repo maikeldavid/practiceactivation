@@ -38,7 +38,14 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         initialData?.careTeamMembers || []
     );
 
-    const [newMember, setNewMember] = useState({ name: '', role: '', email: '', phone: '', title: '' });
+    const [newMember, setNewMember] = useState({
+        name: '',
+        role: '',
+        email: '',
+        phone: '',
+        title: '',
+        officeAssignments: [] as string[]
+    });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const validateForm = () => {
@@ -112,14 +119,30 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
     };
 
     const handleAddMember = () => {
-        if (newMember.name && newMember.role && newMember.email) {
+        if (newMember.name && newMember.role && newMember.email && newMember.phone && newMember.officeAssignments.length > 0) {
             const member: ContactInfo = {
                 id: Date.now().toString(),
                 ...newMember
             };
             setCareTeamMembers(prev => [...prev, member]);
-            setNewMember({ name: '', role: '', email: '', phone: '', title: '' });
+            setNewMember({
+                name: '',
+                role: '',
+                email: '',
+                phone: '',
+                title: '',
+                officeAssignments: []
+            });
         }
+    };
+
+    const toggleMemberAssignment = (locationId: string) => {
+        setNewMember(prev => ({
+            ...prev,
+            officeAssignments: prev.officeAssignments.includes(locationId)
+                ? prev.officeAssignments.filter(id => id !== locationId)
+                : [...prev.officeAssignments, locationId]
+        }));
     };
 
     const isFormValid = practiceData.name && physician.name && physician.npi && locations[0].address;
@@ -321,8 +344,8 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                     type="button"
                                     onClick={() => toggleAssignment(loc.id)}
                                     className={`px-4 py-2 rounded-full border-2 text-sm font-bold transition-all ${physician.officeAssignments.includes(loc.id)
-                                            ? 'bg-itera-blue border-itera-blue text-white shadow-md'
-                                            : 'bg-white border-gray-200 text-gray-600 hover:border-itera-blue hover:text-itera-blue'
+                                        ? 'bg-itera-blue border-itera-blue text-white shadow-md'
+                                        : 'bg-white border-gray-200 text-gray-600 hover:border-itera-blue hover:text-itera-blue'
                                         }`}
                                 >
                                     {loc.name}
@@ -345,8 +368,24 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                             {careTeamMembers.map((member) => (
                                 <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-200">
                                     <div className="flex-1">
-                                        <p className="font-bold text-gray-800">{member.name}</p>
-                                        <p className="text-sm text-gray-600">{member.role} • {member.email}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="font-bold text-gray-800">{member.name}</p>
+                                            <span className="text-xs px-2 py-0.5 bg-blue-50 text-itera-blue border border-blue-100 rounded-full font-medium">{member.role}</span>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mt-1 flex items-center gap-4">
+                                            <span>✉️ {member.email}</span>
+                                            <span>📞 {member.phone}</span>
+                                        </p>
+                                        <div className="flex flex-wrap gap-1 mt-2">
+                                            {member.officeAssignments?.map(locId => {
+                                                const loc = locations.find(l => l.id === locId);
+                                                return loc ? (
+                                                    <span key={locId} className="text-[10px] uppercase tracking-wider font-bold bg-gray-200 text-gray-500 px-2 py-0.5 rounded">
+                                                        {loc.name}
+                                                    </span>
+                                                ) : null;
+                                            })}
+                                        </div>
                                     </div>
                                     <button
                                         type="button"
@@ -362,7 +401,7 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
 
                     <div className="bg-blue-50/50 p-6 rounded-xl border border-blue-100">
                         <p className="text-sm font-bold text-gray-700 mb-4">Add Care Team Member</p>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <input
                                 type="text"
                                 value={newMember.name}
@@ -384,12 +423,38 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
                                 className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
                                 placeholder="Email"
                             />
+                            <input
+                                type="tel"
+                                value={newMember.phone}
+                                onChange={(e) => setNewMember(prev => ({ ...prev, phone: e.target.value }))}
+                                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-itera-blue"
+                                placeholder="Phone"
+                            />
+                        </div>
+
+                        <div className="mt-4">
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Work Locations *</label>
+                            <div className="flex flex-wrap gap-2">
+                                {locations.map(loc => loc.name && (
+                                    <button
+                                        key={loc.id}
+                                        type="button"
+                                        onClick={() => toggleMemberAssignment(loc.id)}
+                                        className={`px-3 py-1.5 rounded-lg border-2 text-xs font-bold transition-all ${newMember.officeAssignments.includes(loc.id)
+                                                ? 'bg-itera-blue border-itera-blue text-white'
+                                                : 'bg-white border-gray-100 text-gray-400 hover:border-itera-blue/30'
+                                            }`}
+                                    >
+                                        {loc.name}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                         <button
                             type="button"
                             onClick={handleAddMember}
-                            disabled={!newMember.name || !newMember.role || !newMember.email}
-                            className="mt-4 flex items-center gap-2 px-6 py-2 bg-itera-blue text-white font-bold rounded-lg hover:bg-itera-blue-dark transition-colors disabled:bg-gray-300"
+                            disabled={!newMember.name || !newMember.role || !newMember.email || !newMember.phone || newMember.officeAssignments.length === 0}
+                            className="mt-4 flex items-center gap-2 px-6 py-2 bg-itera-blue text-white font-bold rounded-lg hover:bg-itera-blue-dark transition-colors disabled:bg-gray-200"
                         >
                             + Add Member
                         </button>
