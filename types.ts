@@ -112,6 +112,7 @@ export interface EHRConfig {
   ehrSystem: string;
   username: string;
   password?: string;
+  loginUrl?: string;
   lastConnected?: string;
 }
 

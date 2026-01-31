@@ -196,8 +196,8 @@ const TeamSettingsView: React.FC<TeamSettingsViewProps> = ({ roles, setRoles, on
                                 </button>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="md:col-span-2">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="md:col-span-3">
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">Role Title</label>
                                     <input
                                         type="text"
@@ -241,7 +241,7 @@ const TeamSettingsView: React.FC<TeamSettingsViewProps> = ({ roles, setRoles, on
                                     )}
                                 </div>
 
-                                <div className="md:col-span-2">
+                                <div className="">
                                     <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number</label>
                                     <input
                                         type="tel"
@@ -268,14 +268,16 @@ const TeamSettingsView: React.FC<TeamSettingsViewProps> = ({ roles, setRoles, on
                                 </button>
                                 <button
                                     onClick={cancelEditing}
-                                    className="px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-all"
+                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-gray-100 text-gray-600 font-bold rounded-xl hover:bg-gray-200 transition-all"
                                 >
+                                    <XIcon className="w-5 h-5" />
                                     Cancel
                                 </button>
                                 <button
                                     onClick={clearForm}
-                                    className="px-6 py-4 bg-white text-gray-400 border border-gray-100 font-bold rounded-xl hover:bg-gray-50 hover:text-gray-600 transition-all"
+                                    className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-white text-gray-400 border border-gray-100 font-bold rounded-xl hover:bg-gray-50 hover:text-gray-600 transition-all"
                                 >
+                                    <Trash2Icon className="w-5 h-5" />
                                     Clear
                                 </button>
                             </div>

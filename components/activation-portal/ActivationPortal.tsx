@@ -70,16 +70,17 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
 
   if (!isOpen) return null;
 
-  const syncWithZoho = async (extraData: any = {}, profileOverride?: PracticeProfile) => {
+  const syncWithZoho = async (extraData: any = {}, profileOverride?: PracticeProfile, userProfileOverride?: typeof userProfile) => {
     if (isSyncing) return;
 
     try {
       setIsSyncing(true);
       const activeProfile = profileOverride || providerProfile;
+      const activeUserProfile = userProfileOverride || userProfile;
 
       // Identity Resolution: Prioritize clinical profile email, then personal profile, then signup email
-      const physicianEmail = activeProfile?.physician.email || userProfile.email || practiceInfo.email;
-      const physicianName = activeProfile?.physician.name || userProfile.name || practiceInfo.name;
+      const physicianEmail = activeProfile?.physician.email || activeUserProfile.email || practiceInfo.email;
+      const physicianName = activeProfile?.physician.name || activeUserProfile.name || practiceInfo.name;
 
       const currentStep = completedSteps.size > 0 ? Math.max(...Array.from(completedSteps) as number[]) : 0;
       const statusText = currentStep > 0 ? `Step ${currentStep} Completed` : 'Initiated';
@@ -104,10 +105,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           practiceName: activeProfile?.name || practiceInfo.practiceName,
           providerName: physicianName,
           providerEmail: physicianEmail,
-          practicePhone: activeProfile?.locations[0]?.phone || userProfile.phone,
-          providerPhone: activeProfile?.physician.phone,
-          phone: activeProfile?.physician.phone || userProfile.phone || activeProfile?.locations[0]?.phone,
-          address: activeProfile?.locations[0]?.address || userProfile.address,
+          phone: activeProfile?.physician.phone || activeUserProfile.phone || activeProfile?.locations[0]?.phone,
+          address: activeProfile?.locations[0]?.address || activeUserProfile.address,
           npi: activeProfile?.physician.npi,
           website: activeProfile?.website,
           medicarePotential: activeProfile?.medicarePotential,
@@ -354,7 +353,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             onSave={(data) => {
               const updatedProfile = { ...userProfile, ...data };
               setUserProfile(updatedProfile);
-              syncWithZoho({ status: 'Updating User Personal Profile' });
+              syncWithZoho({ status: 'Updating User Personal Profile' }, undefined, updatedProfile);
               setActiveView('onboarding');
             }}
             onCancel={() => setActiveView('onboarding')}

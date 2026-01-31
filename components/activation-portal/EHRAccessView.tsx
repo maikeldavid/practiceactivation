@@ -10,26 +10,21 @@ interface EHRAccessViewProps {
 }
 
 const EHR_SYSTEMS = [
-    'Epic', 'Cerner', 'Athenahealth', 'eClinicalWorks', 'NextGen Healthcare', 'Allscripts', 'DrChrono'
+    'Epic', 'Cerner', 'Athenahealth', 'eClinicalWorks', 'NextGen Healthcare', 'Allscripts', 'DrChrono',
+    'Meditech', 'Greenway Health', 'Practice Fusion', 'AdvancedMD', 'CareCloud', 'Kareo',
+    'ECW (eClinicalWorks)', 'Centricity (GE Healthcare)', 'CPSI / TruBridge', 'Epic Community Connect',
+    'RXNT', 'PrognoCIS', 'OpenEMR', 'Other'
 ];
 
 const EHRAccessView: React.FC<EHRAccessViewProps> = ({ config, onSave, onCancel }) => {
-    const [form, setForm] = useState<EHRConfig>(config || { ehrSystem: '', username: '', password: '' });
-    const [isTesting, setIsTesting] = useState(false);
-    const [testResult, setTestResult] = useState<'success' | 'error' | null>(null);
+    const [form, setForm] = useState<EHRConfig>(config || { ehrSystem: '', username: '', password: '', loginUrl: '' });
+    const [manualEhrName, setManualEhrName] = useState('');
 
-    const handleTestConnection = () => {
-        setIsTesting(true);
-        setTestResult(null);
-        // Mock connection test
-        setTimeout(() => {
-            setIsTesting(false);
-            setTestResult('success');
-        }, 1500);
-    };
+
 
     const handleSave = () => {
-        onSave({ ...form, lastConnected: new Date().toISOString() });
+        const finalEhrSystem = form.ehrSystem === 'Other' ? manualEhrName : form.ehrSystem;
+        onSave({ ...form, ehrSystem: finalEhrSystem, lastConnected: new Date().toISOString() });
     };
 
     return (
@@ -58,6 +53,26 @@ const EHRAccessView: React.FC<EHRAccessViewProps> = ({ config, onSave, onCancel 
                         <option value="">Select your EHR system</option>
                         {EHR_SYSTEMS.map(sys => <option key={sys} value={sys}>{sys}</option>)}
                     </select>
+                    {form.ehrSystem === 'Other' && (
+                        <input
+                            type="text"
+                            value={manualEhrName}
+                            onChange={(e) => setManualEhrName(e.target.value)}
+                            className="mt-3 w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent outline-none transition-all"
+                            placeholder="Enter your EHR system name"
+                        />
+                    )}
+                </div>
+
+                <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">EHR Login URL</label>
+                    <input
+                        type="url"
+                        value={form.loginUrl || ''}
+                        onChange={(e) => setForm({ ...form, loginUrl: e.target.value })}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent outline-none transition-all"
+                        placeholder="https://ehr.example.com/login"
+                    />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -90,50 +105,13 @@ const EHRAccessView: React.FC<EHRAccessViewProps> = ({ config, onSave, onCancel 
                     </p>
                 </div>
 
-                <div className="flex gap-4 pt-4">
-                    <button
-                        onClick={handleTestConnection}
-                        disabled={isTesting || !form.ehrSystem || !form.username}
-                        className="flex-1 flex items-center justify-center gap-2 bg-white text-itera-blue border border-itera-blue font-bold py-3 rounded-xl hover:bg-itera-blue-light transition-all disabled:opacity-50"
-                    >
-                        {isTesting ? (
-                            <ActivityIcon className="w-5 h-5 animate-spin" />
-                        ) : (
-                            <ActivityIcon className="w-5 h-5" />
-                        )}
-                        {isTesting ? 'Verifying...' : 'Test Connection'}
-                    </button>
-                </div>
 
-                {testResult === 'success' && (
-                    <div className="p-5 bg-green-50 border border-green-200 rounded-xl animate-fade-in-up">
-                        <div className="flex items-center gap-3 text-green-700 font-bold mb-2">
-                            <CheckCircleIcon className="w-5 h-5" />
-                            Connection Successful
-                        </div>
-                        <p className="text-sm text-green-600">
-                            System verified. <strong>124 patients</strong> found eligible for Digital Care Management in your {form.ehrSystem} dashboard.
-                        </p>
-                    </div>
-                )}
-
-                {testResult === 'error' && (
-                    <div className="p-5 bg-red-50 border border-red-200 rounded-xl animate-fade-in-up">
-                        <div className="flex items-center gap-3 text-red-700 font-bold mb-2">
-                            <AlertCircleIcon className="w-5 h-5" />
-                            Connection Failed
-                        </div>
-                        <p className="text-sm text-red-600">
-                            Could not verify credentials. Please check your username and password.
-                        </p>
-                    </div>
-                )}
             </div>
 
             <div className="mt-10 flex gap-4 border-t border-gray-100 pt-8">
                 <button
                     onClick={handleSave}
-                    disabled={testResult !== 'success'}
+                    disabled={!form.ehrSystem || !form.username || !form.loginUrl || (form.ehrSystem === 'Other' && !manualEhrName)}
                     className="flex-1 flex items-center justify-center gap-2 bg-itera-blue text-white font-bold py-4 rounded-xl shadow-lg hover:bg-itera-blue-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <SaveIcon className="w-5 h-5" />
