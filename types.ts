@@ -211,3 +211,26 @@ export interface Role {
   permissions: string[];
   userCount: number;
 }
+
+export interface Campaign {
+  id: string;
+  name: string;
+  type: 'call' | 'email';
+  status: 'draft' | 'active' | 'paused' | 'completed';
+  targetAudience: {
+    statusFilter?: PatientStatus[];
+    ageRange?: { min: number; max: number };
+    programFilter?: string[];
+  };
+  schedule?: {
+    startDate: string;
+    endDate?: string;
+  };
+  stats: {
+    totalTargets: number;
+    contacted: number;
+    converted: number;
+  };
+  createdAt: string;
+  createdBy: string;
+}

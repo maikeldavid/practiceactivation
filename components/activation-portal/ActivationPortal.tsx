@@ -19,7 +19,7 @@ import DocumentSigningView from './DocumentSigningView';
 import UserProfileView from './UserProfileView';
 import ResponsibilityMatrixView from './ResponsibilityMatrixView';
 import OutreachScriptReviewView from './OutreachScriptReviewView';
-import type { EHRConfig, TrainingMeeting, ZohoAssignmentRule, PracticeProfile, RegisteredProvider, OnboardingTask } from '../../types';
+import type { EHRConfig, TrainingMeeting, ZohoAssignmentRule, PracticeProfile, RegisteredProvider, OnboardingTask, Campaign } from '../../types';
 import AddProviderModal from './AddProviderModal';
 import ProviderManagementView from './ProviderManagementView';
 import TaskInboxView from './TaskInboxView';
@@ -120,6 +120,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
     { id: '5', name: 'Care Coordinator', permissions: ['View Patients', 'Edit Care Plans'], userCount: 0 },
     { id: '6', name: 'Care Manager', permissions: ['View Patients', 'Log Calls', 'Schedule Appointments', 'Daily Monitoring'], userCount: 0 }
   ]);
+
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
 
   const getTaskStatus = (id: string): OnboardingTask['status'] => {
     const stepNum = parseInt(id);
@@ -428,6 +430,33 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
     setProviderList(prev => [newProvider, ...prev]);
   };
 
+  const handleCreateCampaign = (campaignData: Omit<Campaign, 'id' | 'createdAt' | 'stats'>) => {
+    const newCampaign: Campaign = {
+      ...campaignData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      stats: {
+        totalTargets: patientList.filter(p => {
+          if (campaignData.targetAudience.statusFilter && campaignData.targetAudience.statusFilter.length > 0) {
+            return campaignData.targetAudience.statusFilter.includes(p.status);
+          }
+          return true;
+        }).length,
+        contacted: 0,
+        converted: 0
+      }
+    };
+    setCampaigns(prev => [newCampaign, ...prev]);
+  };
+
+  const handleUpdateCampaign = (id: string, updates: Partial<Campaign>) => {
+    setCampaigns(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+  };
+
+  const handleDeleteCampaign = (id: string) => {
+    setCampaigns(prev => prev.filter(c => c.id !== id));
+  };
+
   const handleUpdateTaskStatus = (id: string, status: OnboardingTask['status']) => {
     if (status === 'Completed') {
       const stepNum = parseInt(id);
@@ -650,7 +679,15 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           />
         );
       case 'campaigns':
-        return <CampaignManagementView />;
+        return (
+          <CampaignManagementView
+            campaigns={campaigns}
+            patients={patientList}
+            onCreateCampaign={handleCreateCampaign}
+            onUpdateCampaign={handleUpdateCampaign}
+            onDeleteCampaign={handleDeleteCampaign}
+          />
+        );
       default:
         return <DashboardView patients={patientList} />;
     }
