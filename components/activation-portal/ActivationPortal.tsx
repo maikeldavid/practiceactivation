@@ -23,9 +23,10 @@ import type { EHRConfig, TrainingMeeting, ZohoAssignmentRule, PracticeProfile, R
 import AddProviderModal from './AddProviderModal';
 import ProviderManagementView from './ProviderManagementView';
 import TaskInboxView from './TaskInboxView';
-import { StethoscopeIcon, InboxIcon } from '../IconComponents';
+import CampaignManagementView from './CampaignManagementView';
+import { StethoscopeIcon, InboxIcon, MegaphoneIcon } from '../IconComponents';
 
-type View = 'dashboard' | 'onboarding' | 'patients' | 'analytics' | 'documents' | 'team' | 'ehr' | 'training' | 'outreach' | 'provider-profile' | 'document-signing' | 'user-profile' | 'responsibility-matrix' | 'outreach-scripts' | 'providers' | 'task-inbox';
+type View = 'dashboard' | 'onboarding' | 'patients' | 'analytics' | 'documents' | 'team' | 'ehr' | 'training' | 'outreach' | 'provider-profile' | 'document-signing' | 'user-profile' | 'responsibility-matrix' | 'outreach-scripts' | 'providers' | 'task-inbox' | 'campaigns';
 
 interface ActivationPortalProps {
   isOpen: boolean;
@@ -648,6 +649,8 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             onAddTask={handleAddCustomTask}
           />
         );
+      case 'campaigns':
+        return <CampaignManagementView />;
       default:
         return <DashboardView patients={patientList} />;
     }
@@ -668,6 +671,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
             <NavItem view="task-inbox" icon={InboxIcon} label="Task Inbox" />
             <NavItem view="outreach" icon={HeadsetIcon} label="Daily Outreach Plan" />
             <NavItem view="patients" icon={UsersIcon} label="Patient Management" />
+            <NavItem view="campaigns" icon={MegaphoneIcon} label="Campaigns" />
             <NavItem view="analytics" icon={BarChart3} label="Enrollment Analytics" />
             <NavItem view="responsibility-matrix" icon={ShieldCheckIcon} label="Responsibility Matrix" />
             <NavItem view="documents" icon={FolderIcon} label="Document Library" />
