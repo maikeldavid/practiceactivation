@@ -18,10 +18,14 @@ const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
     patients
 }) => {
     const [name, setName] = useState(editingCampaign?.name || '');
-    const [type, setType] = useState<'call' | 'email'>(editingCampaign?.type || 'call');
+    const [type, setType] = useState<'call' | 'email' | 'sms'>(editingCampaign?.type || 'call');
     const [status, setStatus] = useState<Campaign['status']>(editingCampaign?.status || 'draft');
+    const [smsTemplate, setSmsTemplate] = useState(editingCampaign?.content?.smsTemplate || '');
     const [selectedStatuses, setSelectedStatuses] = useState<PatientStatus[]>(
         editingCampaign?.targetAudience.statusFilter || []
+    );
+    const [selectedConditions, setSelectedConditions] = useState<string[]>(
+        editingCampaign?.targetAudience.conditionFilter || []
     );
     const [startDate, setStartDate] = useState(
         editingCampaign?.schedule?.startDate || new Date().toISOString().split('T')[0]
@@ -33,9 +37,13 @@ const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
             if (selectedStatuses.length > 0 && !selectedStatuses.includes(p.status)) {
                 return false;
             }
+            if (selectedConditions.length > 0) {
+                const hasCondition = p.chronicConditions?.some(c => selectedConditions.includes(c));
+                if (!hasCondition) return false;
+            }
             return true;
         }).length;
-    }, [patients, selectedStatuses]);
+    }, [patients, selectedStatuses, selectedConditions]);
 
     const handleSave = () => {
         if (!name.trim()) return;
@@ -45,12 +53,16 @@ const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
             type,
             status,
             targetAudience: {
-                statusFilter: selectedStatuses.length > 0 ? selectedStatuses : undefined
+                statusFilter: selectedStatuses.length > 0 ? selectedStatuses : undefined,
+                conditionFilter: selectedConditions.length > 0 ? selectedConditions : undefined
             },
             schedule: {
                 startDate,
                 endDate: endDate || undefined
             },
+            content: type === 'sms' ? {
+                smsTemplate: smsTemplate || undefined
+            } : undefined,
             createdBy: 'Current User'
         };
 
@@ -63,8 +75,10 @@ const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
         setType('call');
         setStatus('draft');
         setSelectedStatuses([]);
+        setSelectedConditions([]);
         setStartDate(new Date().toISOString().split('T')[0]);
         setEndDate('');
+        setSmsTemplate('');
         onClose();
     };
 
@@ -81,6 +95,24 @@ const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
             setSelectedStatuses(selectedStatuses.filter(s => s !== stat));
         } else {
             setSelectedStatuses([...selectedStatuses, stat]);
+        }
+    };
+
+    const conditionOptions = [
+        'Diabetes',
+        'Hypertension',
+        'Heart Disease',
+        'COPD',
+        'Asthma',
+        'Arthritis',
+        'CKD'
+    ];
+
+    const toggleCondition = (condition: string) => {
+        if (selectedConditions.includes(condition)) {
+            setSelectedConditions(selectedConditions.filter(c => c !== condition));
+        } else {
+            setSelectedConditions([...selectedConditions, condition]);
         }
     };
 
@@ -137,6 +169,18 @@ const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
                             <label className="flex-1 cursor-pointer">
                                 <input
                                     type="radio"
+                                    value="sms"
+                                    checked={type === 'sms'}
+                                    onChange={(e) => setType(e.target.value as 'sms')}
+                                    className="sr-only peer"
+                                />
+                                <div className="px-4 py-3 border-2 border-gray-200 rounded-xl text-center font-bold peer-checked:border-itera-blue peer-checked:bg-itera-blue/5 peer-checked:text-itera-blue transition-all">
+                                    💬 SMS Campaign
+                                </div>
+                            </label>
+                            <label className="flex-1 cursor-pointer">
+                                <input
+                                    type="radio"
                                     value="email"
                                     checked={type === 'email'}
                                     onChange={(e) => setType(e.target.value as 'email')}
@@ -148,6 +192,30 @@ const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
                             </label>
                         </div>
                     </div>
+
+                    {/* SMS Template (only for SMS campaigns) */}
+                    {type === 'sms' && (
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-2">
+                                SMS Message Template
+                            </label>
+                            <textarea
+                                value={smsTemplate}
+                                onChange={(e) => setSmsTemplate(e.target.value)}
+                                placeholder="Hello {patientName}, this is your care team from {practiceName}. We'd like to schedule an appointment..." rows={4}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue outline-none resize-none"
+                            />
+                            <div className="flex justify-between items-center mt-2">
+                                <p className="text-xs text-gray-500">
+                                    Variables: {'{patientName}'}, {'{practiceName}'}, {'{appointmentDate}'}
+                                </p>
+                                <p className={`text-xs font-bold ${smsTemplate.length > 160 ? 'text-orange-600' : 'text-gray-500'
+                                    }`}>
+                                    {smsTemplate.length}/160 chars {smsTemplate.length > 160 && `(${Math.ceil(smsTemplate.length / 160)} messages)`}
+                                </p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Status */}
                     <div>
@@ -188,6 +256,31 @@ const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
                             Leave empty to target all patients
+                        </p>
+                    </div>
+
+                    {/* Target by Chronic Conditions */}
+                    <div>
+                        <label className="block text-sm font-bold text-gray-700 mb-3">
+                            Target by Chronic Conditions
+                        </label>
+                        <div className="space-y-2">
+                            {conditionOptions.map(condition => (
+                                <label key={condition} className="flex items-center gap-3 cursor-pointer group">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedConditions.includes(condition)}
+                                        onChange={() => toggleCondition(condition)}
+                                        className="w-4 h-4 text-itera-blue border-gray-300 rounded focus:ring-itera-blue"
+                                    />
+                                    <span className="text-sm text-gray-700 group-hover:text-itera-blue transition-colors">
+                                        {condition}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                            Leave empty to target all conditions
                         </p>
                     </div>
 

@@ -215,10 +215,11 @@ export interface Role {
 export interface Campaign {
   id: string;
   name: string;
-  type: 'call' | 'email';
+  type: 'call' | 'email' | 'sms'; // Updated to include SMS
   status: 'draft' | 'active' | 'paused' | 'completed';
   targetAudience: {
     statusFilter?: PatientStatus[];
+    conditionFilter?: string[];
     ageRange?: { min: number; max: number };
     programFilter?: string[];
   };
@@ -233,4 +234,156 @@ export interface Campaign {
   };
   createdAt: string;
   createdBy: string;
+  // Twilio specific
+  content?: {
+    smsTemplate?: string;
+    callScriptId?: string;
+    emailTemplate?: string;
+  };
+  twilioConfig?: {
+    throttleRate?: number; // messages/min
+  };
+}
+
+// ===== TWILIO TYPES =====
+
+export interface TwilioConfig {
+  accountSid: string;
+  authToken: string;
+  phoneNumber: string;
+  twimlAppSid?: string;
+  statusCallback?: string;
+}
+
+export type SMSStatus = 'queued' | 'sent' | 'delivered' | 'failed' | 'undelivered';
+export type CallStatus = 'queued' | 'ringing' | 'in-progress' | 'completed' | 'busy' | 'failed' | 'no-answer' | 'canceled';
+
+export interface SMSMessage {
+  id: string; // Twilio MessageSid
+  to: string;
+  from: string;
+  body: string;
+  status: SMSStatus;
+  dateSent: string;
+  dateDelivered?: string;
+  dateUpdated?: string;
+  errorCode?: string;
+  errorMessage?: string;
+  numSegments?: number; // For messages > 160 chars
+  price?: string;
+  priceUnit?: string;
+  // Internal tracking
+  patientId?: string;
+  campaignId?: string;
+  direction?: 'outbound' | 'inbound';
+}
+
+export interface CallRecord {
+  id: string; // Twilio CallSid
+  to: string;
+  from: string;
+  status: CallStatus;
+  duration?: number; // seconds
+  startTime?: string;
+  endTime?: string;
+  recordingUrl?: string;
+  recordingSid?: string;
+  transcriptionText?: string;
+  answeredBy?: 'human' | 'machine' | 'unknown';
+  price?: string;
+  priceUnit?: string;
+  // Internal tracking
+  patientId?: string;
+  campaignId?: string;
+  callOutcome?: string;
+  callNotes?: string;
+}
+
+export interface TwilioWebhookPayload {
+  // SMS webhook fields
+  MessageSid?: string;
+  SmsSid?: string;
+  SmsStatus?: SMSStatus;
+  From?: string;
+  To?: string;
+  Body?: string;
+  NumSegments?: string;
+  ErrorCode?: string;
+
+  // Call webhook fields
+  CallSid?: string;
+  CallStatus?: CallStatus;
+  CallDuration?: string;
+  RecordingUrl?: string;
+  RecordingSid?: string;
+  AnsweredBy?: string;
+
+  // Common
+  AccountSid?: string;
+  ApiVersion?: string;
+}
+
+export interface SMSTemplate {
+  id: string;
+  name: string;
+  body: string;
+  variables: string[]; // e.g., ['patientName', 'appointmentDate']
+  category: 'appointment' | 'reminder' | 'follow-up' | 'consent' | 'general';
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CallScript {
+  id: string;
+  name: string;
+  description?: string;
+  twimlUrl?: string; // URL to TwiML bin or endpoint
+  script: string; // Text version for display
+  variables: string[];
+  type: 'automated' | 'ivr' | 'text-to-speech';
+  voiceSettings?: {
+    voice: 'alice' | 'man' | 'woman';
+    language: 'en-US' | 'es-ES' | 'es-MX';
+  };
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CampaignExecution {
+  id: string;
+  campaignId: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  startedAt?: string;
+  completedAt?: string;
+  progress: {
+    total: number;
+    processed: number;
+    successful: number;
+    failed: number;
+  };
+  errors?: Array<{
+    patientId: string;
+    error: string;
+    timestamp: string;
+  }>;
+}
+
+export interface TwilioCampaignStats {
+  campaignId: string;
+  type: 'sms' | 'call';
+  totalSent: number;
+  delivered: number;
+  failed: number;
+  pending: number;
+  replied?: number; // For SMS
+  optedOut?: number; // For SMS
+  averageDuration?: number; // For calls (seconds)
+  totalCost: number;
+  costBreakdown: {
+    sms?: number;
+    voice?: number;
+  };
+  lastUpdated: string;
 }

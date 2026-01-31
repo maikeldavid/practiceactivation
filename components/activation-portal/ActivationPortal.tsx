@@ -438,7 +438,13 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       stats: {
         totalTargets: patientList.filter(p => {
           if (campaignData.targetAudience.statusFilter && campaignData.targetAudience.statusFilter.length > 0) {
-            return campaignData.targetAudience.statusFilter.includes(p.status);
+            if (!campaignData.targetAudience.statusFilter.includes(p.status)) {
+              return false;
+            }
+          }
+          if (campaignData.targetAudience.conditionFilter && campaignData.targetAudience.conditionFilter.length > 0) {
+            const hasCondition = p.chronicConditions?.some(c => campaignData.targetAudience.conditionFilter?.includes(c));
+            if (!hasCondition) return false;
           }
           return true;
         }).length,
