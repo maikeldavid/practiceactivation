@@ -1,19 +1,19 @@
 
 import React, { useState, useMemo } from 'react';
 import type { MockPatient } from '../../types';
-import { 
-    DatabaseIcon, 
-    PhoneCall, 
-    UserCheckIcon, 
-    CalendarIcon, 
-    UserPlusIcon, 
+import {
+    DatabaseIcon,
+    PhoneCall,
+    UserCheckIcon,
+    CalendarIcon,
+    UserPlusIcon,
     TrendingUpIcon,
     UsersIcon,
     CheckCircleIcon
 } from '../IconComponents';
 
 interface DashboardViewProps {
-  patients: MockPatient[];
+    patients: MockPatient[];
 }
 
 // --- HELPER FUNCTIONS ---
@@ -78,9 +78,9 @@ const TrendChart: React.FC<{ data: any[] }> = ({ data }) => {
     // A simplified line chart component
     const width = 500, height = 200, padding = 30;
     const maxVal = Math.max(...data.flatMap(d => [d.contacted, d.scheduled])) || 10;
-    
+
     const toPath = (points, color, strokeDasharray = "") => {
-        if(points.length === 0) return { path: "", dots: [] };
+        if (points.length === 0) return { path: "", dots: [] };
         const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
         const dots = points.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="3" fill={color} />);
         return { path, dots };
@@ -95,25 +95,25 @@ const TrendChart: React.FC<{ data: any[] }> = ({ data }) => {
         y: height - padding - (d.scheduled / maxVal) * (height - 2 * padding)
     }));
 
-    const {path: pathContacted, dots: dotsContacted} = toPath(pointsContacted, 'var(--itera-blue-default)');
-    const {path: pathScheduled, dots: dotsScheduled} = toPath(pointsScheduled, 'var(--itera-orange-default)');
+    const { path: pathContacted, dots: dotsContacted } = toPath(pointsContacted, 'var(--itera-blue-default)');
+    const { path: pathScheduled, dots: dotsScheduled } = toPath(pointsScheduled, 'var(--itera-orange-default)');
 
     return (
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
             {/* Y Axis */}
             <line x1={padding} y1={padding} x2={padding} y2={height - padding} stroke="#e0e0e0" />
             {[...Array(5)].map((_, i) => (
-                 <g key={i}>
-                    <line x1={padding} y1={height - padding - (i * (height-2*padding)/4)} x2={width-padding} y2={height - padding - (i * (height-2*padding)/4)} stroke="#f0f0f0" />
-                    <text x={padding - 10} y={height - padding - (i * (height-2*padding)/4) + 4} textAnchor="end" fontSize="10" fill="#9ca3af">
-                        {Math.round(i * maxVal/4)}
+                <g key={i}>
+                    <line x1={padding} y1={height - padding - (i * (height - 2 * padding) / 4)} x2={width - padding} y2={height - padding - (i * (height - 2 * padding) / 4)} stroke="#f0f0f0" />
+                    <text x={padding - 10} y={height - padding - (i * (height - 2 * padding) / 4) + 4} textAnchor="end" fontSize="10" fill="#9ca3af">
+                        {Math.round(i * maxVal / 4)}
                     </text>
-                 </g>
+                </g>
             ))}
-             {/* X Axis */}
-            <line x1={padding} y1={height-padding} x2={width-padding} y2={height-padding} stroke="#e0e0e0" />
-            {data.map((d,i) => (
-                <text key={i} x={pointsContacted[i]?.x} y={height-padding + 15} textAnchor="middle" fontSize="10" fill="#9ca3af">
+            {/* X Axis */}
+            <line x1={padding} y1={height - padding} x2={width - padding} y2={height - padding} stroke="#e0e0e0" />
+            {data.map((d, i) => (
+                <text key={i} x={pointsContacted[i]?.x} y={height - padding + 15} textAnchor="middle" fontSize="10" fill="#9ca3af">
                     Wk {d.week}
                 </text>
             ))}
@@ -199,7 +199,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ patients }) => {
         month: new Date().getMonth() + 1,
         week: 0,
     });
-    
+
     const filteredPatients = useMemo(() => {
         return patients.filter(p => {
             const date = p.callAttemptDate ? new Date(p.callAttemptDate) : null;
@@ -230,7 +230,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ patients }) => {
             percentEnrolled: totalDatabase > 0 ? `${((enrolledPatients / totalDatabase) * 100).toFixed(0)}%` : '0%',
         }
     }, [filteredPatients]);
-    
+
     const programDistribution = useMemo(() => {
         const enrolled = filteredPatients.filter(p => p.enrollmentDate && p.enrolledPrograms && p.enrolledPrograms.length > 0);
         return {
@@ -242,7 +242,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ patients }) => {
 
     const trendChartData = useMemo(() => {
         const numWeeks = getWeeksInMonth(filters.year, filters.month);
-        return Array.from({length: numWeeks}, (_, i) => i + 1).map(week => {
+        return Array.from({ length: numWeeks }, (_, i) => i + 1).map(week => {
             const weekPatients = filteredPatients.filter(p => p.callAttemptDate && getWeekOfMonth(new Date(p.callAttemptDate)) === week);
             return {
                 week,
@@ -260,13 +260,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({ patients }) => {
         const colors = { UHC: '#004B8D', Aetna: '#007BFF', Cigna: '#F97316', Humana: '#60A5FA', Other: '#9CA3AF' };
         return Object.entries(counts).map(([name, value]) => ({ name, value: value as number, color: colors[name] || '#ccc' }));
     }, [filteredPatients]);
-    
+
     const careManagerChartData = useMemo(() => {
         const counts = filteredPatients.reduce((acc, p) => {
             if (p.careManager) acc[p.careManager] = (acc[p.careManager] || 0) + 1;
             return acc;
         }, {});
-        return Object.entries(counts).map(([name, value]) => ({ name, value: value as number })).sort((a,b) => b.value - a.value);
+        return Object.entries(counts).map(([name, value]) => ({ name, value: value as number })).sort((a, b) => b.value - a.value);
     }, [filteredPatients]);
 
 
@@ -276,7 +276,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ patients }) => {
                 <h2 className="text-3xl font-bold text-itera-blue-dark">Enrollment Dashboard</h2>
                 <FilterControls onFilterChange={setFilters} />
             </div>
-            
+
             {/* KPI Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <KpiCard title="Total Database" value={kpis.totalDatabase} description="Total patients in period" icon={DatabaseIcon} />
@@ -286,13 +286,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({ patients }) => {
                 <KpiCard title="Enrolled Patients" value={kpis.enrolledPatients} description={`${kpis.percentEnrolled} of total`} icon={UserPlusIcon} />
             </div>
 
-             {/* Program Distribution */}
+            {/* Program Distribution */}
             <div className="bg-white p-3 rounded-lg border border-gray-200">
                 <div className="flex flex-wrap items-center justify-around gap-4 text-center">
                     <div className="font-semibold text-itera-blue-dark">Enrolled In:</div>
-                    <div><span className="font-bold text-lg text-itera-blue-dark">{programDistribution.ccm}</span><span className="text-sm text-gray-500 ml-1">CCM</span></div>
-                    <div><span className="font-bold text-lg text-itera-blue-dark">{programDistribution.rpm}</span><span className="text-sm text-gray-500 ml-1">RPM</span></div>
-                    <div><span className="font-bold text-lg text-itera-blue-dark">{programDistribution.ccmAndRpm}</span><span className="text-sm text-gray-500 ml-1">CCM & RPM</span></div>
+                    <div><span className="font-bold text-lg text-itera-blue-dark">{programDistribution.ccm}</span><span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Chronic Care Management</span></div>
+                    <div><span className="font-bold text-lg text-itera-blue-dark">{programDistribution.rpm}</span><span className="text-[10px] uppercase font-bold text-gray-400 ml-1">Remote Patient Monitoring</span></div>
+                    <div><span className="font-bold text-lg text-itera-blue-dark">{programDistribution.ccmAndRpm}</span><span className="text-[10px] uppercase font-bold text-gray-400 ml-1">CCM & RPM</span></div>
                 </div>
             </div>
 
@@ -301,7 +301,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ patients }) => {
                 <div className="lg:col-span-3 bg-white p-4 rounded-lg border border-gray-200">
                     <h3 className="font-semibold text-itera-blue-dark mb-2">Weekly Trends</h3>
                     <TrendChart data={trendChartData} />
-                     <div className="flex items-center justify-center gap-6 mt-2 text-sm">
+                    <div className="flex items-center justify-center gap-6 mt-2 text-sm">
                         <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-itera-blue mr-2"></span>Contacted</div>
                         <div className="flex items-center"><span className="w-3 h-3 rounded-full bg-itera-orange mr-2"></span>Scheduled</div>
                     </div>
@@ -311,7 +311,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({ patients }) => {
                         <h3 className="font-semibold text-itera-blue-dark mb-4">Insurance per Patient</h3>
                         <PieChart data={insuranceChartData} />
                     </div>
-                     <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
                         <h3 className="font-semibold text-itera-blue-dark mb-4">Patients per Care Manager</h3>
                         <HorizontalBarChart data={careManagerChartData} />
                     </div>

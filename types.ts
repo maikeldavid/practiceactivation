@@ -51,16 +51,20 @@ export interface ChatMessage {
   feedback?: 'like' | 'dislike' | null;
 }
 
-export type PatientStatus = 'Pending Approval' | 'Approved' | 'Outreach - 1st Attempt' | 'Outreach - 2nd Attempt' | 'Consent Sent' | 'Device Shipped' | 'Active' | 'Not Approved';
+export type PatientStatus = 'Pending Approval' | 'Approved' | 'Outreach - 1st Attempt' | 'Outreach - 2nd Attempt' | 'Consent Sent' | 'Scheduled with CM' | 'Device Shipped' | 'Active' | 'Not Approved';
 
 export interface MockPatient {
   id: number;
+  mrn?: string; // New field for import
+  providerNpi?: string; // New field for import
+  lastVisitDate?: string; // ISO string or YYYY-MM-DD
   name: string;
   dob: string;
   gender?: 'male' | 'female';
   zipCode?: string;
   email?: string;
-  phone?: string;
+  phone?: string; // Mobile
+  homePhone?: string;
   address?: string;
   medications?: string[];
   eligiblePrograms: string[];
@@ -77,6 +81,17 @@ export interface MockPatient {
   lastCallOutcome?: string;
   lastCallNotes?: string;
   nextCallDate?: string; // ISO string
+  eligibilityAnalysis?: any; // To store detailed engine results
+  callLogs?: CallLog[];
+}
+
+export interface CallLog {
+  id: string;
+  date: string; // ISO string
+  outcome: string;
+  notes: string;
+  nextAction?: string;
+  performedBy?: string;
 }
 
 export interface Document {
@@ -98,6 +113,12 @@ export interface Folder {
 
 export type DocumentItem = Document | Folder;
 
+export interface CareManagerSlot {
+  day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+}
+
 export interface ContactInfo {
   id: string;
   title: string;
@@ -107,6 +128,8 @@ export interface ContactInfo {
   phone: string;
   isCustom?: boolean;
   officeAssignments?: string[]; // IDs of PracticeLocations
+  isCareManager?: boolean;
+  availability?: CareManagerSlot[];
 }
 export interface EHRConfig {
   ehrSystem: string;
@@ -155,4 +178,36 @@ export interface PracticeProfile {
   locations: PracticeLocation[];
   physician: PrincipalPhysician;
   careTeamMembers: ContactInfo[];
+}
+
+export interface RegisteredProvider {
+  id: string;
+  name: string;
+  email: string;
+  practiceName: string;
+  npi?: string;
+  status: 'Active' | 'Pending' | 'Inactive';
+  registrationDate: string;
+  location?: string;
+  programs?: string[];
+}
+
+export interface OnboardingTask {
+  id: string;
+  title: string;
+  description: string;
+  status: 'Pending' | 'In Progress' | 'Completed' | 'Delayed';
+  category: 'Legal' | 'Clinical' | 'Technical' | 'Training';
+  dueDate?: string;
+  assignee?: string;
+  assignedBy?: string;
+  checklist?: string[];
+  isCompletable?: boolean;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  permissions: string[];
+  userCount: number;
 }

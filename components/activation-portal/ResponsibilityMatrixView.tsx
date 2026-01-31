@@ -1,143 +1,214 @@
 import React from 'react';
-import { CheckCircleIcon, UsersIcon, ShieldCheckIcon, ClipboardListIcon, BarChart3, DatabaseIcon } from '../IconComponents';
+import { UsersIcon, ShieldCheckIcon, BarChart3, DatabaseIcon, InfoIcon } from '../IconComponents';
 
-interface Responsibility {
+type RACIValue = 'R' | 'A' | 'C' | 'I' | '-';
+type Ownership = 'ITERA-LED' | 'PRACTICE-LED';
+
+interface RACIItem {
     task: string;
-    practice: boolean;
-    itera: boolean;
-    detail: string;
+    description: string;
+    ownership: Ownership;
+    roles: {
+        physician: RACIValue;
+        staff: RACIValue;
+        iteraManager: RACIValue;
+    };
 }
 
-interface Category {
+interface RACICategory {
     title: string;
     icon: React.ElementType;
-    items: Responsibility[];
+    items: RACIItem[];
 }
 
+const OwnershipBadge: React.FC<{ ownership: Ownership }> = ({ ownership }) => {
+    const isItera = ownership === 'ITERA-LED';
+    return (
+        <span className={`px-2 py-1 rounded text-[10px] font-bold border uppercase tracking-tighter ${isItera
+            ? 'bg-green-50 text-green-700 border-green-100'
+            : 'bg-itera-blue-light/30 text-itera-blue border-itera-blue-light/50'}`}>
+            {ownership}
+        </span>
+    );
+};
+
+const RACIBadge: React.FC<{ value: RACIValue }> = ({ value }) => {
+    if (value === '-') return <span className="text-gray-200">-</span>;
+
+    const styles = {
+        'R': 'bg-blue-50 text-blue-700 border-blue-200',
+        'A': 'bg-purple-50 text-purple-700 border-purple-200',
+        'C': 'bg-orange-50 text-orange-700 border-orange-200',
+        'I': 'bg-teal-50 text-teal-700 border-teal-200'
+    };
+
+    const labels = {
+        'R': 'Responsible',
+        'A': 'Accountable',
+        'C': 'Consulted',
+        'I': 'Informed'
+    };
+
+    return (
+        <div className="flex justify-center">
+            <span className={`px-3 py-1 rounded-full border font-bold text-[10px] uppercase tracking-tight shadow-sm transition-transform hover:scale-105 ${styles[value]}`}>
+                {labels[value]}
+            </span>
+        </div>
+    );
+};
+
 const ResponsibilityMatrixView: React.FC = () => {
-    const categories: Category[] = [
+    const categories: RACICategory[] = [
         {
-            title: 'Clinical Services (CCM, RPM, PCM)',
+            title: 'Clinical Services',
             icon: UsersIcon,
             items: [
-                { task: 'Patient Identification & Selection', practice: true, itera: true, detail: 'Practice provides access to EHR; Itera identifies potential candidates using specialized analytics.' },
-                { task: 'Clinical Care Plan Development', practice: true, itera: false, detail: 'Physician reviews and approves the initial care plan for each patient.' },
-                { task: 'Monthly Clinical Monitoring', practice: false, itera: true, detail: 'Itera Care Managers conduct 20+ minutes of clinical interaction and monitoring per month.' },
-                { task: 'Urgent Clinical Escalations', practice: true, itera: false, detail: 'Itera escalates urgent findings; Practice handles immediate clinical interventions.' },
-                { task: 'Medication Reconciliation', practice: true, itera: true, detail: 'Itera reviews current meds; Physician makes any necessary clinical adjustments.' },
+                {
+                    task: 'Patient Selection & Approval',
+                    description: 'Identifying and approving patients for program eligibility.',
+                    ownership: 'ITERA-LED',
+                    roles: { physician: 'A', staff: 'I', iteraManager: 'R' }
+                },
+                {
+                    task: 'Care Plan Development',
+                    description: 'Creation and physician approval of initial patient care plans.',
+                    ownership: 'ITERA-LED',
+                    roles: { physician: 'A', staff: 'C', iteraManager: 'R' }
+                },
+                {
+                    task: 'Monthly Clinical Monitoring',
+                    description: '20+ minutes of recursive clinical interaction per month.',
+                    ownership: 'ITERA-LED',
+                    roles: { physician: 'A', staff: 'I', iteraManager: 'R' }
+                },
+                {
+                    task: 'Urgent Clinical Escalations',
+                    description: 'Immediate notification and handling of critical health findings.',
+                    ownership: 'PRACTICE-LED',
+                    roles: { physician: 'R', staff: 'C', iteraManager: 'I' }
+                }
             ]
         },
         {
             title: 'Administrative & Governance',
             icon: ShieldCheckIcon,
             items: [
-                { task: 'Regulatory Compliance (HIPAA, etc.)', practice: true, itera: true, detail: 'Both parties maintain strict adherence to healthcare privacy and security standards.' },
-                { task: 'Patient Consent Collection', practice: true, itera: true, detail: 'Itera manages the digital signing process; Practice assists with in-office signatures when needed.' },
-                { task: 'Program Documentation Maintenance', practice: false, itera: true, detail: 'Itera maintains comprehensive audit logs for all clinical interactions.' },
+                {
+                    task: 'HIPAA & Compliance',
+                    description: 'Ensuring data privacy and regulatory standards are met.',
+                    ownership: 'ITERA-LED',
+                    roles: { physician: 'I', staff: 'R', iteraManager: 'A' }
+                },
+                {
+                    task: 'Patient Consent Management',
+                    description: 'Managing digital and verbal consent for program participation.',
+                    ownership: 'ITERA-LED',
+                    roles: { physician: 'I', staff: 'C', iteraManager: 'R' }
+                }
             ]
         },
         {
             title: 'Billing & Financials',
             icon: BarChart3,
             items: [
-                { task: 'Monthly Billing Reporting', practice: false, itera: true, detail: 'Itera generates a ready-to-bill report with all qualified CPT codes.' },
-                { task: 'Claim Submission to Payers', practice: true, itera: false, detail: 'Practice submits the claims to Medicare/Insurance through their billing system.' },
-                { task: 'Reimbursement Guarantee Support', practice: false, itera: true, detail: 'Itera provides all necessary documentation to defend claims in case of audits.' },
+                {
+                    task: 'Monthly Billing Reporting',
+                    description: 'Generation of qualified CPT code reports for practice billing.',
+                    ownership: 'ITERA-LED',
+                    roles: { physician: 'I', staff: 'C', iteraManager: 'R' }
+                },
+                {
+                    task: 'Claim Submission',
+                    description: 'Submitting finalized claims to Medicare and private payers.',
+                    ownership: 'PRACTICE-LED',
+                    roles: { physician: 'I', staff: 'R', iteraManager: 'I' }
+                }
             ]
         },
         {
             title: 'Technology & Data',
             icon: DatabaseIcon,
             items: [
-                { task: 'EHR Access & Integration', practice: true, itera: false, detail: 'Practice provides necessary access rights to their Electronic Health Record system.' },
-                { task: 'Real-time Dashboarding', practice: false, itera: true, detail: 'Itera provides the portal with real-time analytics of practice performance.' },
+                {
+                    task: 'EHR Access Maintenance',
+                    description: 'Providing and maintaining secure read/write access to practice EHR.',
+                    ownership: 'PRACTICE-LED',
+                    roles: { physician: 'A', staff: 'R', iteraManager: 'I' }
+                }
             ]
         }
     ];
 
     return (
         <div className="space-y-8 animate-fade-in-up pb-20">
-            <div>
-                <h2 className="text-3xl font-bold text-itera-blue-dark mb-2">Responsibility Matrix</h2>
-                <p className="text-gray-600">Visual mapping of duties between the Practice and Itera Health.</p>
-            </div>
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 className="text-3xl font-bold text-itera-blue-dark">RACI Responsibility Matrix</h2>
+                    <p className="text-gray-600 mt-1">Operational roles and accountability mapping for Itera Health partnership.</p>
+                </div>
+                <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-blue-500"></div><span className="text-[10px] font-bold text-gray-500">R: Responsible</span></div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-purple-500"></div><span className="text-[10px] font-bold text-gray-500">A: Accountable</span></div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-orange-500"></div><span className="text-[10px] font-bold text-gray-500">C: Consulted</span></div>
+                    <div className="flex items-center gap-2"><div className="w-3 h-3 rounded bg-teal-500"></div><span className="text-[10px] font-bold text-gray-500">I: Informed</span></div>
+                </div>
+            </header>
 
             <div className="bg-white rounded-[2.5rem] border border-gray-200 shadow-xl overflow-hidden">
-                {/* Table Header */}
-                <div className="grid grid-cols-12 bg-gray-50 border-b border-gray-200 px-8 py-5">
-                    <div className="col-span-6 lg:col-span-7">
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Service Task / Responsibility</span>
-                    </div>
-                    <div className="col-span-3 lg:col-span-2 text-center">
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Practice</span>
-                    </div>
-                    <div className="col-span-3 lg:col-span-3 text-center">
-                        <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Itera Health</span>
-                    </div>
-                </div>
-
-                {/* Categories */}
-                <div className="divide-y divide-gray-100">
-                    {categories.map((category, catIdx) => (
-                        <div key={catIdx}>
-                            {/* Category Subheader */}
-                            <div className="bg-itera-blue-light/5 px-8 py-4 flex items-center gap-3">
-                                <category.icon className="w-5 h-5 text-itera-blue" />
-                                <h3 className="font-bold text-itera-blue-dark">{category.title}</h3>
-                            </div>
-
-                            {/* Items */}
-                            <div className="divide-y divide-gray-50">
-                                {category.items.map((item, itemIdx) => (
-                                    <div key={itemIdx} className="grid grid-cols-12 px-8 py-3 hover:bg-gray-50/50 transition-colors gap-4">
-                                        <div className="col-span-6 lg:col-span-7">
-                                            <p className="font-bold text-gray-800 text-sm mb-1">{item.task}</p>
-                                            <p className="text-xs text-gray-500 leading-relaxed font-normal">{item.detail}</p>
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="bg-gray-50 border-b border-gray-200">
+                            <th className="px-8 py-6 font-bold text-xs text-gray-400 uppercase tracking-widest w-1/4">Project Task / Service</th>
+                            <th className="px-4 py-6 font-bold text-xs text-gray-400 uppercase tracking-widest text-center">Ownership</th>
+                            <th className="px-4 py-6 font-bold text-xs text-gray-400 uppercase tracking-widest text-center">Physician</th>
+                            <th className="px-4 py-6 font-bold text-xs text-gray-400 uppercase tracking-widest text-center">Practice Staff</th>
+                            <th className="px-4 py-6 font-bold text-xs text-gray-400 uppercase tracking-widest text-center">Itera Care Manager</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {categories.map((category) => (
+                            <React.Fragment key={category.title}>
+                                <tr className="bg-itera-blue-light/5">
+                                    <td colSpan={5} className="px-8 py-3">
+                                        <div className="flex items-center gap-2 text-itera-blue">
+                                            <category.icon className="w-4 h-4" />
+                                            <span className="font-bold text-sm tracking-wide">{category.title}</span>
                                         </div>
-
-                                        <div className="col-span-3 lg:col-span-2 flex justify-center items-start pt-1">
-                                            {item.practice ? (
-                                                <div className="flex flex-col items-center gap-1">
-                                                    <CheckCircleIcon className="w-6 h-6 text-itera-blue" />
-                                                    <span className="text-[10px] font-bold text-itera-blue uppercase">Responsible</span>
-                                                </div>
-                                            ) : (
-                                                <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200"></div>
-                                            )}
-                                        </div>
-
-                                        <div className="col-span-3 lg:col-span-3 flex justify-center items-start pt-1">
-                                            {item.itera ? (
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <CheckCircleIcon className="w-6 h-6 text-green-500" />
-                                                    <div className="px-3 py-1 bg-green-50 rounded-full border border-green-100">
-                                                        <span className="text-[10px] font-bold text-green-600 uppercase">Managed by Itera</span>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="w-6 h-6 rounded-full bg-gray-100 border border-gray-200"></div>
-                                            )}
-                                        </div>
-                                    </div>
+                                    </td>
+                                </tr>
+                                {category.items.map((item) => (
+                                    <tr key={item.task} className="hover:bg-gray-50 transition-colors group">
+                                        <td className="px-8 py-5">
+                                            <div className="space-y-1">
+                                                <p className="font-bold text-gray-800 text-sm group-hover:text-itera-blue transition-colors">{item.task}</p>
+                                                <p className="text-xs text-gray-500 leading-relaxed max-w-md">{item.description}</p>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-5 text-center"><OwnershipBadge ownership={item.ownership} /></td>
+                                        <td className="px-4 py-5"><RACIBadge value={item.roles.physician} /></td>
+                                        <td className="px-4 py-5"><RACIBadge value={item.roles.staff} /></td>
+                                        <td className="px-4 py-5"><RACIBadge value={item.roles.iteraManager} /></td>
+                                    </tr>
                                 ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                            </React.Fragment>
+                        ))}
+                    </tbody>
+                </table>
             </div>
 
-            {/* Summary Footer */}
-            <div className="bg-itera-blue-dark text-white p-8 rounded-[2rem] shadow-lg flex flex-col md:flex-row justify-between items-center gap-6">
-                <div className="max-w-xl">
-                    <h4 className="text-xl font-bold mb-2 italic">A True Partnership Model</h4>
-                    <p className="text-itera-blue-light/80 text-sm leading-relaxed">
-                        Itera Health functions as an extension of your existing clinical team. While you maintain ultimate authority and clinical oversight of your patients, we handle the intensive, day-to-day coordination and documentation that high-touch care programs require.
-                    </p>
-                </div>
-                <div className="flex-shrink-0">
-                    <button className="px-6 py-3 bg-white text-itera-blue-dark font-bold rounded-xl hover:bg-itera-blue-light transition-all shadow-md">
-                        Download PDF Matrix
-                    </button>
+            <div className="bg-itera-blue-dark text-white p-8 rounded-[2.5rem] shadow-lg relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32 transition-transform group-hover:scale-110 duration-700"></div>
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="max-w-2xl">
+                        <h4 className="text-xl font-bold mb-3 flex items-center gap-2">
+                            <InfoIcon className="w-5 h-5 text-itera-blue-light" />
+                            Clinical Oversight Reminder
+                        </h4>
+                        <p className="text-itera-blue-light/80 text-sm leading-relaxed">
+                            Under CMS guidelines, the **Practice Physician** remains ultimately Accountable (A) for clinical decisions and patient care plans. Itera Health serves as the Responsible (R) execution arm, ensuring every requirement is met with clinical precision, while the platform provides the necessary data-driven transparency.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -145,3 +216,4 @@ const ResponsibilityMatrixView: React.FC = () => {
 };
 
 export default ResponsibilityMatrixView;
+

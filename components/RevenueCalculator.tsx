@@ -78,9 +78,9 @@ const RevenueCalculator: React.FC = () => {
                             <label className="text-sm font-bold text-gray-400 uppercase tracking-widest">Select Managed Programs</label>
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 {[
-                                    { id: 'CCM', label: 'Chronic Care', icon: HeartPulseIcon },
-                                    { id: 'RPM', label: 'Remote Monitoring', icon: ActivityIcon },
-                                    { id: 'TCM', label: 'Transitions', icon: ClipboardListIcon },
+                                    { id: 'CCM', label: 'Chronic Care Management', icon: HeartPulseIcon },
+                                    { id: 'RPM', label: 'Remote Patient Monitoring', icon: ActivityIcon },
+                                    { id: 'TCM', label: 'Transitional Care', icon: ClipboardListIcon },
                                 ].map((prog) => (
                                     <button
                                         key={prog.id}

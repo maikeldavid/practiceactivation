@@ -119,9 +119,16 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         const phoneRegex = /^(\+?\d{1,2}\s?)?(\(\d{3}\)|\d{3})[\s.-]?\d{3}[\s.-]?\d{4}$/;
         const npiRegex = /^\d{10}$/;
+        const numericOnlyRegex = /^\d+$/;
+        const usAddressRegex = /^.+,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(-\d{4})?$/;
 
         // 1. Practice Info
-        if (!practiceData.name.trim()) newErrors.practiceName = 'Practice name is required';
+        if (!practiceData.name.trim()) {
+            newErrors.practiceName = 'Practice name is required';
+        } else if (numericOnlyRegex.test(practiceData.name.trim())) {
+            newErrors.practiceName = 'Practice name cannot be purely numeric';
+        }
+
         if (practiceData.orgNPI && !npiRegex.test(practiceData.orgNPI.replace(/\D/g, ''))) {
             newErrors.orgNPI = 'Organization NPI must be exactly 10 digits';
         }
@@ -129,7 +136,12 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         // 2. Locations
         locations.forEach((loc, index) => {
             if (!loc.name.trim()) newErrors[`location_${index}_name`] = 'Location name is required';
-            if (!loc.address.trim()) newErrors[`location_${index}_address`] = 'Address is required';
+            if (!loc.address.trim()) {
+                newErrors[`location_${index}_address`] = 'Address is required';
+            } else if (!usAddressRegex.test(loc.address)) {
+                newErrors[`location_${index}_address`] = 'Please use US format: Street, City, ST 12345';
+            }
+
             if (!loc.phone.trim()) {
                 newErrors[`location_${index}_phone`] = 'Phone is required';
             } else if (!phoneRegex.test(loc.phone)) {
@@ -141,7 +153,12 @@ const ProviderProfileView: React.FC<ProviderProfileViewProps> = ({ initialData, 
         });
 
         // 3. Physician
-        if (!physician.name.trim()) newErrors.physicianName = 'Physician name is required';
+        if (!physician.name.trim()) {
+            newErrors.physicianName = 'Physician name is required';
+        } else if (numericOnlyRegex.test(physician.name.trim())) {
+            newErrors.physicianName = 'Physician name cannot be purely numeric';
+        }
+
         if (!physician.npi.trim()) {
             newErrors.physicianNPI = 'Physician NPI is required';
         } else if (!npiRegex.test(physician.npi.replace(/\D/g, ''))) {

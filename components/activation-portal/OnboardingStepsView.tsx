@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { TIMELINE_STEPS } from '../../constants';
-import { CheckCircleIcon, Settings, DatabaseIcon, CalendarClockIcon } from '../IconComponents';
+import { CheckCircleIcon, Settings, DatabaseIcon, CalendarClockIcon, MessageSquareIcon } from '../IconComponents';
 import { ContactInfo, TrainingMeeting, PracticeProfile } from '../../types';
 
 interface OnboardingStepsViewProps {
@@ -173,6 +173,23 @@ const OnboardingStepsView: React.FC<OnboardingStepsViewProps> = ({ roles, traini
                     )}
                   </div>
                 )}
+                {activeStep === 6 && (
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => onNavigate('outreach-scripts')}
+                      className="flex items-center gap-2 bg-white text-itera-blue-dark border border-itera-blue/20 font-bold py-2.5 px-5 rounded-xl shadow-sm hover:bg-itera-blue-light/30 transition-all group"
+                    >
+                      <MessageSquareIcon className="w-5 h-5 text-itera-blue group-hover:scale-110 transition-transform" />
+                      Review & Approve Outreach Scripts
+                    </button>
+                    {completedSteps.has(6) && (
+                      <p className="text-xs text-green-600 font-medium flex items-center gap-1.5 bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
+                        <CheckCircleIcon className="w-4 h-4" />
+                        Scripts Approved
+                      </p>
+                    )}
+                  </div>
+                )}
                 {activeStep === 3 && !isTeamConfigured && (
                   <p className="text-xs text-itera-orange font-medium flex items-center gap-1.5 bg-itera-orange/10 px-3 py-1.5 rounded-lg border border-itera-orange/20">
                     <span className="w-1.5 h-1.5 bg-itera-orange rounded-full animate-pulse"></span>
@@ -229,10 +246,11 @@ const OnboardingStepsView: React.FC<OnboardingStepsViewProps> = ({ roles, traini
             </div>
 
           </div>
-        )}
-      </div>
+        )
+        }
+      </div >
 
-    </div>
+    </div >
   );
 };
 

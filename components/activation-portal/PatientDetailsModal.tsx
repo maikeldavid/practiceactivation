@@ -1,14 +1,19 @@
 
 import React from 'react';
-import { XIcon, UserIcon, HeartPulseIcon, ActivityIcon, ShieldCheckIcon, CalendarIcon, BriefcaseIcon, PhoneCall, CheckCircleIcon, MailIcon, MapPinIcon, PillIcon } from '../IconComponents';
+import { XIcon, UserIcon, HeartPulseIcon, ActivityIcon, ShieldCheckIcon, CalendarIcon, BriefcaseIcon, PhoneCall, CheckCircleIcon, MailIcon, MapPinIcon, PillIcon, ClockIcon } from '../IconComponents';
 import type { MockPatient } from '../../types';
+import { PROGRAM_NAMES } from '../../utils/eligibilityEngine';
 
 interface PatientDetailsModalProps {
     patient: MockPatient;
     onClose: () => void;
     onLogCall?: (id: number) => void;
+    onViewHistory?: (id: number) => void;
     onSchedule?: (id: number, date: string, time: string) => void;
+    onAssignCareManager?: (id: number, manager: string) => void;
 }
+
+const CARE_MANAGERS = ['Ana Smith', 'John Doe', 'Emily White', 'Michael Brown'];
 
 const calculateAge = (dob: string) => {
     const birthday = new Date(dob);
@@ -22,14 +27,20 @@ const formatDate = (dateString?: string) => {
     return dateString.split('T')[0];
 };
 
-const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({ patient, onClose, onLogCall, onSchedule }) => {
+const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({ patient, onClose, onLogCall, onViewHistory, onSchedule, onAssignCareManager }) => {
     const age = calculateAge(patient.dob);
     const [scheduleDate, setScheduleDate] = React.useState('');
     const [scheduleTime, setScheduleTime] = React.useState('');
     const [isScheduling, setIsScheduling] = React.useState(false);
+    const [isEditingCM, setIsEditingCM] = React.useState(false);
+    const [selectedCM, setSelectedCM] = React.useState(patient.careManager || '');
 
     const handleLogCall = () => {
         if (onLogCall) onLogCall(patient.id);
+    };
+
+    const handleViewHistory = () => {
+        if (onViewHistory) onViewHistory(patient.id);
     };
 
     const handleSchedule = () => {
@@ -56,43 +67,44 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({ patient, onCl
                     </button>
 
                     <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0 border-2 border-white/20 shadow-xl">
-                            <img
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${patient.name}`}
-                                alt={patient.name}
-                                className="w-full h-full object-cover bg-itera-blue-light/20"
-                            />
+                        <div className="w-24 h-24 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border-2 border-white/20 shadow-xl overflow-hidden">
+                            <UserIcon className="w-16 h-16 text-white/40 mb-[-12px]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 flex-wrap mb-3">
+                            <div className="flex items-center gap-3 flex-wrap mb-2">
                                 <h2 className="text-3xl font-bold uppercase tracking-tight truncate">{patient.name}</h2>
                                 <span className="px-2 py-0.5 bg-white/10 backdrop-blur-md rounded text-xs font-bold text-white/90 border border-white/10 uppercase tracking-widest">{patient.zipCode || '00000'}</span>
                                 <span className="px-2 py-0.5 bg-blue-500/50 backdrop-blur-md rounded text-[10px] font-bold text-white uppercase tracking-widest">{patient.gender || 'Unknown'}</span>
+                                <span className="flex items-center gap-1.5 px-2 py-0.5 bg-white/10 backdrop-blur-md rounded text-[10px] font-bold text-white uppercase tracking-widest border border-white/10">
+                                    <CalendarIcon className="w-3 h-3" />
+                                    {formatDate(patient.dob)} ({age}yr)
+                                </span>
                                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold text-white uppercase tracking-widest ${patient.status === 'Active' ? 'bg-green-500/50' : 'bg-gray-500/50'}`}>
                                     {patient.status}
                                 </span>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-6 text-white/70 text-[11px] font-medium uppercase tracking-wider">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-y-2 gap-x-6 text-white/70 text-[11px] font-medium uppercase tracking-wider">
                                 <span className="flex items-center gap-2">
-                                    <CalendarIcon className="w-3.5 h-3.5" />
-                                    {formatDate(patient.dob)} ({age}yr)
+                                    <PhoneCall className="w-3.5 h-3.5" />
+                                    Cell: {patient.phone || 'N/A'}
+                                </span>
+                                <span className="flex items-center gap-2">
+                                    <PhoneCall className="w-3.5 h-3.5" />
+                                    Home: {patient.homePhone || 'N/A'}
                                 </span>
                                 <span className="flex items-center gap-2 text-white/90 truncate">
                                     <MailIcon className="w-3.5 h-3.5" />
                                     {patient.email || 'Email not provided'}
                                 </span>
-                                <span className="flex items-center gap-2">
-                                    <PhoneCall className="w-3.5 h-3.5" />
-                                    {patient.phone || 'Phone not provided'}
-                                </span>
-                                <span className="flex items-center gap-2 lg:col-span-1">
+
+                                <span className="flex items-center gap-2 md:col-span-2 border-t border-white/10 pt-2">
                                     <MapPinIcon className="w-3.5 h-3.5" />
                                     {patient.address || 'Address not provided'}
                                 </span>
-                                <span className="flex items-center gap-2 lg:col-span-2">
+                                <span className="flex items-center gap-2 border-t border-white/10 pt-2">
                                     <BriefcaseIcon className="w-3.5 h-3.5" />
-                                    {patient.insurance || 'No Insurance Data'}
+                                    Plan: {patient.insurance || 'No Insurance Data'}
                                 </span>
                             </div>
                         </div>
@@ -130,10 +142,10 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({ patient, onCl
                                     {patient.eligiblePrograms.map(prog => (
                                         <div key={prog} className="flex items-center justify-between p-4 bg-itera-blue-light/20 border border-itera-blue-light/30 rounded-xl">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-itera-blue text-white flex items-center justify-center text-xs font-bold">
+                                                <div className="w-8 h-8 rounded-lg bg-itera-blue text-white flex items-center justify-center text-[10px] font-bold shrink-0">
                                                     {prog}
                                                 </div>
-                                                <span className="font-bold text-itera-blue-dark text-sm">{prog} Program</span>
+                                                <span className="font-bold text-itera-blue-dark text-sm">{PROGRAM_NAMES[prog] || prog} Program</span>
                                             </div>
                                             <CheckCircleIcon className="w-5 h-5 text-itera-blue" />
                                         </div>
@@ -174,9 +186,36 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({ patient, onCl
                                         </span>
                                     </div>
                                     <div className="space-y-4">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Care Manager</span>
-                                            <span className="text-sm font-bold text-itera-blue-dark">{patient.careManager || 'Not Assigned'}</span>
+                                        <div className="flex flex-col relative group">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Care Manager</span>
+                                                <button
+                                                    onClick={() => setIsEditingCM(!isEditingCM)}
+                                                    className="text-[10px] font-bold text-itera-blue hover:text-itera-blue-dark transition-colors uppercase"
+                                                >
+                                                    {isEditingCM ? 'Cancel' : 'Change'}
+                                                </button>
+                                            </div>
+                                            {isEditingCM ? (
+                                                <select
+                                                    value={selectedCM}
+                                                    onChange={(e) => {
+                                                        const newCM = e.target.value;
+                                                        setSelectedCM(newCM);
+                                                        onAssignCareManager?.(patient.id, newCM);
+                                                        setIsEditingCM(false);
+                                                    }}
+                                                    className="text-sm font-bold text-itera-blue-dark bg-gray-50 border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-itera-blue"
+                                                    autoFocus
+                                                >
+                                                    <option value="">Unassigned</option>
+                                                    {CARE_MANAGERS.map(cm => (
+                                                        <option key={cm} value={cm}>{cm}</option>
+                                                    ))}
+                                                </select>
+                                            ) : (
+                                                <span className="text-sm font-bold text-itera-blue-dark">{selectedCM || 'Not Assigned'}</span>
+                                            )}
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Last Call Attempt</span>
@@ -200,6 +239,15 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({ patient, onCl
                                             <PhoneCall className="w-5 h-5" />
                                             Log Call Attempt
                                         </button>
+                                        {onViewHistory && (
+                                            <button
+                                                onClick={handleViewHistory}
+                                                className="w-full flex items-center justify-center gap-2 bg-gray-50 text-gray-600 border border-gray-200 font-bold py-3.5 rounded-xl hover:bg-gray-100 transition-all active:scale-95 shadow-sm"
+                                            >
+                                                <ClockIcon className="w-5 h-5 text-gray-400" />
+                                                View Call Log
+                                            </button>
+                                        )}
                                         <button
                                             onClick={() => setIsScheduling(!isScheduling)}
                                             className="w-full flex items-center justify-center gap-2 bg-itera-blue text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-itera-blue-dark transition-all active:scale-95"

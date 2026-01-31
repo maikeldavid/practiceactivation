@@ -13,7 +13,7 @@ import {
     XIcon,
     Trash2Icon
 } from '../IconComponents';
-import { ContactInfo } from '../../types';
+import { ContactInfo, CareManagerSlot } from '../../types';
 import { DEFAULT_ROLES } from '../../constants';
 
 interface TeamSettingsViewProps {
@@ -50,9 +50,38 @@ const TeamSettingsView: React.FC<TeamSettingsViewProps> = ({ roles, setRoles, on
         }));
     };
 
-    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setActiveForm(prev => ({ ...prev, [name]: value }));
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value, type } = e.target as HTMLInputElement;
+        const checked = (e.target as HTMLInputElement).checked;
+
+        setActiveForm(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+    };
+
+    const addAvailabilitySlot = () => {
+        const newSlot: CareManagerSlot = { day: 'Monday', startTime: '09:00', endTime: '17:00' };
+        setActiveForm(prev => ({
+            ...prev,
+            availability: [...(prev.availability || []), newSlot]
+        }));
+    };
+
+    const removeAvailabilitySlot = (index: number) => {
+        setActiveForm(prev => ({
+            ...prev,
+            availability: (prev.availability || []).filter((_, i) => i !== index)
+        }));
+    };
+
+    const updateAvailabilitySlot = (index: number, field: keyof CareManagerSlot, value: string) => {
+        setActiveForm(prev => ({
+            ...prev,
+            availability: (prev.availability || []).map((slot, i) =>
+                i === index ? { ...slot, [field]: value } : slot
+            )
+        }));
     };
 
     const validateEmail = (email: string) => {
@@ -253,6 +282,74 @@ const TeamSettingsView: React.FC<TeamSettingsViewProps> = ({ roles, setRoles, on
                                     />
                                     {!isPhoneValid && (
                                         <p className="mt-1 text-xs text-red-500">Please enter a valid phone number.</p>
+                                    )}
+                                </div>
+
+                                <div className="md:col-span-3 pt-4 border-t border-gray-100">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${activeForm.isCareManager ? 'bg-itera-blue' : 'bg-gray-300'}`}
+                                                onClick={() => setActiveForm(prev => ({ ...prev, isCareManager: !prev.isCareManager }))}>
+                                                <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${activeForm.isCareManager ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                                            </div>
+                                            <span className="font-bold text-gray-700">Designate as Care Manager</span>
+                                        </div>
+                                        {activeForm.isCareManager && (
+                                            <button
+                                                onClick={addAvailabilitySlot}
+                                                className="text-xs font-bold text-itera-blue bg-itera-blue-light/30 px-3 py-1.5 rounded-lg hover:bg-itera-blue-light/50 transition-all flex items-center gap-1"
+                                            >
+                                                <CalendarIcon className="w-3.5 h-3.5" />
+                                                Add Availability Block
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {activeForm.isCareManager && (
+                                        <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            {(activeForm.availability || []).length === 0 ? (
+                                                <div className="bg-gray-50 border border-dashed border-gray-200 p-6 rounded-xl text-center">
+                                                    <p className="text-xs text-gray-400">No availability slots defined. This CM won't appear in the scheduler.</p>
+                                                </div>
+                                            ) : (
+                                                <div className="grid grid-cols-1 gap-2">
+                                                    {(activeForm.availability || []).map((slot, index) => (
+                                                        <div key={index} className="flex items-center gap-2 bg-gray-50 p-2 rounded-xl group">
+                                                            <select
+                                                                value={slot.day}
+                                                                onChange={(e) => updateAvailabilitySlot(index, 'day', e.target.value)}
+                                                                className="bg-white border border-gray-200 rounded-lg text-xs px-2 py-1.5 focus:ring-1 focus:ring-itera-blue outline-none"
+                                                            >
+                                                                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => (
+                                                                    <option key={d} value={d}>{d}</option>
+                                                                ))}
+                                                            </select>
+                                                            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1.5">
+                                                                <input
+                                                                    type="time"
+                                                                    value={slot.startTime}
+                                                                    onChange={(e) => updateAvailabilitySlot(index, 'startTime', e.target.value)}
+                                                                    className="text-xs outline-none bg-transparent"
+                                                                />
+                                                                <span className="text-gray-300">to</span>
+                                                                <input
+                                                                    type="time"
+                                                                    value={slot.endTime}
+                                                                    onChange={(e) => updateAvailabilitySlot(index, 'endTime', e.target.value)}
+                                                                    className="text-xs outline-none bg-transparent"
+                                                                />
+                                                            </div>
+                                                            <button
+                                                                onClick={() => removeAvailabilitySlot(index)}
+                                                                className="ml-auto p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                                            >
+                                                                <XIcon className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>

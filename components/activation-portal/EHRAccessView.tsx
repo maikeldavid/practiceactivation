@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { DatabaseIcon, ShieldCheckIcon, SaveIcon, XIcon, CheckCircleIcon, ActivityIcon, AlertCircleIcon } from '../IconComponents';
+import { DatabaseIcon, ShieldCheckIcon, SaveIcon, XIcon, ActivityIcon, EyeIcon, EyeOffIcon } from '../IconComponents';
 import type { EHRConfig } from '../../types';
 
 interface EHRAccessViewProps {
@@ -19,6 +19,7 @@ const EHR_SYSTEMS = [
 const EHRAccessView: React.FC<EHRAccessViewProps> = ({ config, onSave, onCancel }) => {
     const [form, setForm] = useState<EHRConfig>(config || { ehrSystem: '', username: '', password: '', loginUrl: '' });
     const [manualEhrName, setManualEhrName] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
 
 
@@ -77,7 +78,7 @@ const EHRAccessView: React.FC<EHRAccessViewProps> = ({ config, onSave, onCancel 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Username / API Key</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Username</label>
                         <input
                             type="text"
                             value={form.username}
@@ -87,21 +88,33 @@ const EHRAccessView: React.FC<EHRAccessViewProps> = ({ config, onSave, onCancel 
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Password / Secret</label>
-                        <input
-                            type="password"
-                            value={form.password}
-                            onChange={(e) => setForm({ ...form, password: e.target.value })}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent outline-none transition-all"
-                            placeholder="••••••••"
-                        />
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                value={form.password}
+                                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-itera-blue focus:border-transparent outline-none transition-all pr-12"
+                                placeholder="••••••••"
+                            />
+                            <button
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                            >
+                                {showPassword ? (
+                                    <EyeOffIcon className="w-5 h-5" />
+                                ) : (
+                                    <EyeIcon className="w-5 h-5" />
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <div className="bg-itera-blue-light/20 p-4 rounded-xl border border-itera-blue-light/30 flex items-start gap-3">
                     <ShieldCheckIcon className="w-5 h-5 text-itera-blue mt-0.5" />
                     <p className="text-xs text-itera-blue-dark leading-relaxed">
-                        Credentials are encrypted and used solely for authorizing access to eligibility data. ITERA HEALTH complies with HIPAA and SOC 2 security standards.
+                        Credentials are encrypted and used solely for authorizing access to eligibility data.
                     </p>
                 </div>
 

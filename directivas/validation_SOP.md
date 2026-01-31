@@ -6,7 +6,7 @@ Asegurar que los datos ingresados en el perfil de la práctica médica y del mé
 ## Entradas y Reglas de Validación
 
 ### 1. Información de la Práctica (Organization)
-- **Practice Name**: Obligatorio. No puede estar vacío.
+- **Practice Name**: Obligatorio. No puede estar vacío y **no puede ser puramente numérico**.
 - **Organization NPI (Type 2)**: Opcional, pero si se ingresa debe tener exactamente 10 dígitos numéricos.
 - **Practice Website**: Opcional. Debe seguir un formato de URL válido (ej: https://example.com).
 
@@ -14,10 +14,10 @@ Asegurar que los datos ingresados en el perfil de la práctica médica y del mé
 - **Location Name**: Obligatorio.
 - **Office Phone**: Obligatorio. Debe ser un número de teléfono válido (10 dígitos o formato (XXX) XXX-XXXX).
 - **Office Email**: Opcional. Debe ser un formato de correo electrónico válido.
-- **Office Address**: Obligatorio. Debe contener al menos Calle, Ciudad, Estado y Código Postal (validación básica de longitud/contenido).
+- **Office Address**: Obligatorio. Debe seguir un formato de dirección de EE. UU. (ej: 123 Main St, City, ST 12345).
 
 ### 3. Médico Principal (Individual)
-- **Physician Full Name**: Obligatorio.
+- **Physician Full Name**: Obligatorio. **No puede ser puramente numérico**.
 - **Individual NPI (Type 1)**: Obligatorio. Debe tener exactamente 10 dígitos numéricos.
 - **Physician Email**: Opcional. Formato de correo válido.
 - **Physician Phone**: Opcional. Formato de teléfono válido.

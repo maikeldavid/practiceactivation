@@ -418,6 +418,20 @@ export const DEFAULT_ROLES: ContactInfo[] = [
     email: '',
     phone: '',
   },
+  {
+    id: 'iteracm',
+    title: 'Itera Care Manager',
+    description: 'Expert patient interaction and daily monitoring',
+    name: 'John Doe',
+    email: 'john.doe@iterahealth.com',
+    phone: '(555) 000-1111',
+    isCareManager: true,
+    availability: [
+      { day: 'Monday', startTime: '09:00', endTime: '17:00' },
+      { day: 'Wednesday', startTime: '09:00', endTime: '17:00' },
+      { day: 'Friday', startTime: '09:00', endTime: '15:00' }
+    ]
+  },
 ];
 
 export const FAQ_ITEMS: FaqItem[] = [

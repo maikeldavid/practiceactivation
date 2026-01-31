@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import type { Program, MockPatient } from '../../types';
+import type { Program, MockPatient, Role } from '../../types';
 import { Logo, LogOutIcon, LayoutDashboard, ClipboardListIcon, UsersIcon, BarChart3, Settings, FolderIcon, HeadsetIcon, Bell, UserIcon, ChevronDown, ShieldCheckIcon } from '../IconComponents';
 import SettingsModal from '../SettingsModal';
 import { DEFAULT_ROLES } from '../../constants';
@@ -18,10 +18,14 @@ import ProviderProfileView from './ProviderProfileView';
 import DocumentSigningView from './DocumentSigningView';
 import UserProfileView from './UserProfileView';
 import ResponsibilityMatrixView from './ResponsibilityMatrixView';
-import type { EHRConfig, TrainingMeeting, ZohoAssignmentRule, PracticeProfile } from '../../types';
+import OutreachScriptReviewView from './OutreachScriptReviewView';
+import type { EHRConfig, TrainingMeeting, ZohoAssignmentRule, PracticeProfile, RegisteredProvider, OnboardingTask } from '../../types';
+import AddProviderModal from './AddProviderModal';
+import ProviderManagementView from './ProviderManagementView';
+import TaskInboxView from './TaskInboxView';
+import { StethoscopeIcon, InboxIcon } from '../IconComponents';
 
-
-type View = 'dashboard' | 'onboarding' | 'patients' | 'analytics' | 'documents' | 'team' | 'ehr' | 'training' | 'outreach' | 'provider-profile' | 'document-signing' | 'user-profile' | 'responsibility-matrix';
+type View = 'dashboard' | 'onboarding' | 'patients' | 'analytics' | 'documents' | 'team' | 'ehr' | 'training' | 'outreach' | 'provider-profile' | 'document-signing' | 'user-profile' | 'responsibility-matrix' | 'outreach-scripts' | 'providers' | 'task-inbox';
 
 interface ActivationPortalProps {
   isOpen: boolean;
@@ -38,7 +42,7 @@ interface ActivationPortalProps {
 
 const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, practiceInfo, selectedPrograms, patients }) => {
   const [activeView, setActiveView] = useState<View>('dashboard');
-  const [roles, setRoles] = useState<ContactInfo[]>(DEFAULT_ROLES);
+  const [teamMembers, setTeamMembers] = useState<ContactInfo[]>(DEFAULT_ROLES);
   const [ehrConfig, setEhrConfig] = useState<EHRConfig | null>(null);
   const [trainingMeeting, setTrainingMeeting] = useState<TrainingMeeting | null>(null);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
@@ -57,7 +61,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
   const [notifications] = useState([
     { id: '1', message: 'New patient enrollment pending approval', time: '5 min ago', read: false },
     { id: '2', message: 'Team member John Doe added to care team', time: '1 hour ago', read: false },
-    { id: '3', message: 'Monthly CCM report ready for review', time: '2 hours ago', read: true },
+    { id: '3', message: 'Monthly Chronic Care Management report ready for review', time: '2 hours ago', read: true },
   ]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [assignmentRules, setAssignmentRules] = useState<ZohoAssignmentRule[]>([
@@ -67,6 +71,157 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
   const [enableCustomRules, setEnableCustomRules] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
   const [zohoIds, setZohoIds] = useState<{ accountId?: string; contactId?: string; dealId?: string }>({});
+  const [providerList, setProviderList] = useState<RegisteredProvider[]>([
+    {
+      id: '1',
+      name: 'Dr. Michael Smith',
+      email: 'm.smith@valleyhealth.com',
+      practiceName: 'Valley Health Partners',
+      npi: '1234567890',
+      status: 'Active',
+      registrationDate: '2023-11-15',
+      location: 'Miami, FL',
+      programs: ['CCM', 'RPM']
+    },
+    {
+      id: '2',
+      name: 'Dr. Sarah Johnson',
+      email: 'sarah.j@oakmedical.com',
+      practiceName: 'Oak Medical Group',
+      npi: '0987654321',
+      status: 'Pending',
+      registrationDate: '2024-01-10',
+      location: 'Orlando, FL',
+      programs: ['CCM']
+    }
+  ]);
+  const [isAddingProvider, setIsAddingProvider] = useState(false);
+  const [customTasks, setCustomTasks] = useState<OnboardingTask[]>([]);
+  const [portalUsers, setPortalUsers] = useState<any[]>([
+    { id: '1', name: 'Admin User', email: 'admin@itera.health', role: 'Admin', status: 'active' },
+    { id: '2', name: 'Call Center Agent', email: 'callcenter@itera.health', role: 'Call Center', status: 'active' },
+    { id: '3', name: 'Practice Staff', email: 'practice@itera.health', role: 'Practice Staff', status: 'active' },
+    {
+      id: '4', name: 'John Doe', email: 'john.doe@itera.health', role: 'Care Manager', status: 'active',
+      availability: [
+        { day: 'Monday', startTime: '09:00', endTime: '17:00' },
+        { day: 'Wednesday', startTime: '09:00', endTime: '17:00' },
+        { day: 'Friday', startTime: '09:00', endTime: '15:00' }
+      ]
+    }
+  ]);
+
+  const [roles, setRoles] = useState<Role[]>([
+    { id: '1', name: 'Admin', permissions: ['All Access', 'Manage Users', 'Manage Settings'], userCount: 1 },
+    { id: '2', name: 'Call Center', permissions: ['View Patients', 'Enroll Patients', 'Schedule Appointments', 'Log Calls'], userCount: 1 },
+    { id: '3', name: 'Practice Staff', permissions: ['View Patients', 'View Reports', 'Approve Enrollments'], userCount: 1 },
+    { id: '4', name: 'Physician', permissions: ['View Patients', 'Edit Care Plans', 'View Reports'], userCount: 0 },
+    { id: '5', name: 'Care Coordinator', permissions: ['View Patients', 'Edit Care Plans'], userCount: 0 },
+    { id: '6', name: 'Care Manager', permissions: ['View Patients', 'Log Calls', 'Schedule Appointments', 'Daily Monitoring'], userCount: 0 }
+  ]);
+
+  const getTaskStatus = (id: string): OnboardingTask['status'] => {
+    const stepNum = parseInt(id);
+    if (completedSteps.has(stepNum)) return 'Completed';
+
+    // Specific logic for 'In Progress' states
+    if (id === '2' && documentsSignedStatus) return 'Completed';
+    if (id === '2' && !documentsSignedStatus && completedSteps.has(1)) return 'In Progress';
+    if (id === '5' && trainingMeeting) return 'Completed';
+    if (id === '5' && !trainingMeeting && completedSteps.has(4)) return 'In Progress';
+
+    // Auto-progress logic: if previous step is done, current is 'In Progress'
+    if (stepNum > 1 && completedSteps.has(stepNum - 1)) return 'In Progress';
+    if (stepNum === 1 && !completedSteps.has(1)) return 'In Progress';
+
+    return 'Pending';
+  };
+
+  const isEmailValid = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isPhoneValid = (phone: string) => /^[\d\s\-\(\)\+]{7,20}$/.test(phone);
+  const isRoleConfigured = (role: ContactInfo) => !!(role.name && role.email && role.phone && isEmailValid(role.email) && isPhoneValid(role.phone));
+  const isTeamConfigured = teamMembers.length > 0 && teamMembers.every(isRoleConfigured);
+  const isProviderProfileComplete = !!(
+    providerProfile?.name &&
+    providerProfile?.physician.name &&
+    providerProfile?.physician.npi &&
+    providerProfile?.locations.length > 0 &&
+    providerProfile?.locations[0].address
+  );
+
+  const baseOnboardingTasks: OnboardingTask[] = [
+    {
+      id: '1',
+      title: 'Complete Health System Profile',
+      description: 'Provide basic information about your practice, locations, and principal physician.',
+      status: getTaskStatus('1'),
+      category: 'Clinical',
+      dueDate: '2024-01-15',
+      assignee: 'Dr. Michael Smith',
+      isCompletable: isProviderProfileComplete
+    },
+    {
+      id: '2',
+      title: 'Sign Legal Documents',
+      description: 'Review and sign the Physician Services Agreement and Business Associate Agreement.',
+      status: getTaskStatus('2'),
+      category: 'Legal',
+      dueDate: '2024-02-01',
+      assignee: 'Legal Team',
+      isCompletable: documentsSignedStatus
+    },
+    {
+      id: '3',
+      title: 'Identify Care Team Members',
+      description: 'Define the roles and contact information for your Chronic Care team.',
+      status: getTaskStatus('3'),
+      category: 'Clinical',
+      dueDate: '2024-02-10',
+      assignee: 'Dr. Michael Smith',
+      isCompletable: isTeamConfigured
+    },
+    {
+      id: '4',
+      title: 'Setup EHR Access',
+      description: 'Provide credentials or API access for the Itera platform to sync patient data.',
+      status: getTaskStatus('4'),
+      category: 'Technical',
+      dueDate: '2024-02-15',
+      assignee: 'IT Dept',
+      isCompletable: !!ehrConfig
+    },
+    {
+      id: '5',
+      title: 'Schedule Clinical Training',
+      description: 'Book a session for the care team to learn the Itera activation workflow.',
+      status: getTaskStatus('5'),
+      category: 'Training',
+      dueDate: '2024-02-20',
+      assignee: 'Ana Smith',
+      isCompletable: !!trainingMeeting
+    },
+    {
+      id: '6',
+      title: 'Review Outreach Scripts',
+      description: 'Review and approve the automated call scripts for patient enrollment.',
+      status: getTaskStatus('6'),
+      category: 'Training',
+      dueDate: '2024-02-25',
+      assignee: 'Dr. Michael Smith',
+      isCompletable: !!trainingMeeting // Requires training to be scheduled (Step 5)
+    }
+  ];
+
+  const onboardingTasks = [...baseOnboardingTasks, ...customTasks];
+
+  const handleAddCustomTask = (task: Omit<OnboardingTask, 'id' | 'status'>) => {
+    const newTask: OnboardingTask = {
+      ...task,
+      id: `custom-${Date.now()}`,
+      status: 'Pending'
+    };
+    setCustomTasks(prev => [...prev, newTask]);
+  };
 
   if (!isOpen) return null;
 
@@ -167,7 +322,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
     setPatientList(prev => prev.map(p => p.id === id ? { ...p, status: 'Pending Approval' } : p));
   };
 
-  const handleSaveLogCall = (id: number, outcome: string, notes: string, nextAction?: { type: 'appointment' | 'followup', date: string, time: string }) => {
+  const handleSaveLogCall = (id: number, outcome: string, notes: string, nextAction?: { type: 'appointment' | 'followup', date: string, time: string, careManagerId?: string }) => {
     setPatientList(prev => prev.map(p => {
       if (p.id !== id) return p;
 
@@ -179,11 +334,27 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       else if (status === 'Outreach - 1st Attempt') status = 'Outreach - 2nd Attempt';
 
       if (nextAction?.type === 'appointment') {
-        status = 'Consent Sent';
-        appointmentDate = `${nextAction.date}T${nextAction.time}:00Z`;
+        status = 'Scheduled with CM';
+        const [year, month, day] = nextAction.date.split('-').map(Number);
+        const [hours, minutes] = nextAction.time.split(':').map(Number);
+        appointmentDate = new Date(year, month - 1, day, hours, minutes).toISOString();
       } else if (nextAction?.type === 'followup') {
-        nextCallDate = `${nextAction.date}T${nextAction.time}:00Z`;
+        const [year, month, day] = nextAction.date.split('-').map(Number);
+        const [hours, minutes] = nextAction.time.split(':').map(Number);
+        nextCallDate = new Date(year, month - 1, day, hours, minutes).toISOString();
       }
+
+      const newLogCalls = [
+        ...(p.callLogs || []),
+        {
+          id: Date.now().toString(),
+          date: new Date().toISOString(),
+          outcome,
+          notes,
+          nextAction: nextAction ? `${nextAction.type} on ${nextAction.date} at ${nextAction.time}` : undefined,
+          performedBy: 'Current User' // Placeholder, ideally from user context
+        }
+      ];
 
       return {
         ...p,
@@ -193,9 +364,35 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         lastCallOutcome: outcome,
         lastCallNotes: notes,
         callAttemptDate: new Date().toISOString(),
-        careManager: nextAction?.type === 'appointment' ? (p.careManager || 'John Doe') : p.careManager
+        careManager: nextAction?.type === 'appointment'
+          ? (nextAction.careManagerId ? (portalUsers.find(u => u.id === nextAction.careManagerId)?.name || roles.find(r => r.id === nextAction.careManagerId)?.name || p.careManager) : (p.careManager || 'John Doe'))
+          : p.careManager,
+        callLogs: newLogCalls
       };
     }));
+  };
+
+  const handleSuggestPatient = () => {
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Find absolute best candidate
+    const bestCandidate = patientList.find(p => {
+      const isEligible = p.status === 'Approved' || p.status === 'Active';
+      const isScheduledToday = p.nextCallDate?.startsWith(todayStr) || p.appointmentDate?.startsWith(todayStr);
+      const wasCalledToday = p.callAttemptDate?.startsWith(todayStr);
+
+      // We want eligible patients NOT already in today's plan
+      return isEligible && !isScheduledToday && !wasCalledToday;
+    });
+
+    if (bestCandidate) {
+      // Move this patient to "Today's Plan" by setting nextCallDate to today
+      setPatientList(prev => prev.map(p =>
+        p.id === bestCandidate.id
+          ? { ...p, nextCallDate: new Date().toISOString() }
+          : p
+      ));
+    }
   };
 
   const handleSchedule = (id: number, date: string, time: string) => {
@@ -205,6 +402,47 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       appointmentDate: `${date}T${time}:00Z`,
       careManager: p.careManager || 'John Doe'
     } : p));
+  };
+
+  const handleAddPatient = (patient: Omit<MockPatient, 'id' | 'status'>) => {
+    const newId = Math.max(...patientList.map(p => p.id), 0) + 1;
+    const newPatient: MockPatient = {
+      ...patient,
+      id: newId,
+      status: 'Pending Approval'
+    };
+    setPatientList(prev => [newPatient, ...prev]);
+  };
+
+  const handleAssignCareManager = (id: number, manager: string) => {
+    setPatientList(prev => prev.map(p => p.id === id ? { ...p, careManager: manager } : p));
+  };
+
+  const handleAddRegisteredProvider = (provider: Omit<RegisteredProvider, 'id'>) => {
+    const newId = (Math.max(...providerList.map(p => parseInt(p.id)), 0) + 1).toString();
+    const newProvider: RegisteredProvider = {
+      ...provider,
+      id: newId
+    };
+    setProviderList(prev => [newProvider, ...prev]);
+  };
+
+  const handleUpdateTaskStatus = (id: string, status: OnboardingTask['status']) => {
+    if (status === 'Completed') {
+      const stepNum = parseInt(id);
+      if (!isNaN(stepNum)) {
+        setCompletedSteps(prev => new Set(prev).add(stepNum));
+        if (id === '2') setDocumentsSignedStatus(true);
+      } else {
+        // Handle custom tasks
+        setCustomTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+      }
+    } else {
+      // Handle status updates for custom tasks (like In Progress)
+      if (id.startsWith('custom-')) {
+        setCustomTasks(prev => prev.map(t => t.id === id ? { ...t, status } : t));
+      }
+    }
   };
 
   const NavItem: React.FC<{
@@ -228,7 +466,7 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       case 'onboarding':
         return (
           <OnboardingStepsView
-            roles={roles}
+            roles={teamMembers}
             trainingMeeting={trainingMeeting}
             completedSteps={completedSteps}
             setCompletedSteps={setCompletedSteps}
@@ -241,11 +479,22 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         return (
           <PatientManagementView
             patients={patientList}
+            careManagers={portalUsers.filter(u => u.role === 'Care Manager').map(u => ({
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              phone: u.phone || '', // Map or fallback
+              title: u.role,
+              isCareManager: true,
+              availability: u.availability
+            }))}
             onApprove={handleApprove}
             onReject={handleReject}
             onReset={handleReset}
             onSaveLogCall={handleSaveLogCall}
             onSchedule={handleSchedule}
+            onAddPatient={handleAddPatient}
+            onAssignCareManager={handleAssignCareManager}
           />
         );
       case 'analytics':
@@ -255,9 +504,9 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
       case 'team':
         return (
           <TeamSettingsView
-            roles={roles}
+            roles={teamMembers}
             setRoles={(newRoles) => {
-              setRoles(newRoles);
+              setTeamMembers(newRoles);
               setCompletedSteps(prev => {
                 const next = new Set(prev).add(3);
                 syncWithZoho({ status: 'Step 3 Completed (Care Team Setup)' });
@@ -303,7 +552,17 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         return (
           <OutreachWorkspaceView
             patients={patientList}
+            careManagers={portalUsers.filter(u => u.role === 'Care Manager').map(u => ({
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              phone: u.phone || '',
+              title: u.role,
+              isCareManager: true,
+              availability: u.availability
+            }))}
             onSaveLogCall={handleSaveLogCall}
+            onSuggestPatient={handleSuggestPatient}
           />
         );
       case 'provider-profile':
@@ -361,6 +620,34 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         );
       case 'responsibility-matrix':
         return <ResponsibilityMatrixView />;
+      case 'outreach-scripts':
+        return (
+          <OutreachScriptReviewView
+            onApprove={(scripts) => {
+              syncWithZoho({ status: 'Step 6 Script Approved', scripts });
+              handleUpdateTaskStatus('6', 'Completed');
+              setActiveView('onboarding');
+            }}
+            onCancel={() => setActiveView('onboarding')}
+            physicianName={providerProfile?.physician.name}
+          />
+        );
+      case 'providers':
+        return (
+          <ProviderManagementView
+            providers={providerList}
+            onAddProvider={() => setIsAddingProvider(true)}
+          />
+        );
+      case 'task-inbox':
+        return (
+          <TaskInboxView
+            tasks={onboardingTasks}
+            onUpdateStatus={handleUpdateTaskStatus}
+            onNavigate={setActiveView}
+            onAddTask={handleAddCustomTask}
+          />
+        );
       default:
         return <DashboardView patients={patientList} />;
     }
@@ -378,11 +665,15 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
           <nav className="flex-grow p-4 space-y-2">
             <NavItem view="dashboard" icon={LayoutDashboard} label="Dashboard" />
             <NavItem view="onboarding" icon={ClipboardListIcon} label="Onboarding Steps" />
+            <NavItem view="task-inbox" icon={InboxIcon} label="Task Inbox" />
             <NavItem view="outreach" icon={HeadsetIcon} label="Daily Outreach Plan" />
             <NavItem view="patients" icon={UsersIcon} label="Patient Management" />
             <NavItem view="analytics" icon={BarChart3} label="Enrollment Analytics" />
             <NavItem view="responsibility-matrix" icon={ShieldCheckIcon} label="Responsibility Matrix" />
             <NavItem view="documents" icon={FolderIcon} label="Document Library" />
+            {practiceInfo.role === 'Admin' && (
+              <NavItem view="providers" icon={StethoscopeIcon} label="Registered Providers" />
+            )}
             <NavItem view="team" icon={Settings} label="Care Team Setup" />
           </nav>
           <div className="p-4 border-t border-gray-200">
@@ -518,7 +809,17 @@ const ActivationPortal: React.FC<ActivationPortalProps> = ({ isOpen, onClose, pr
         onRulesChange={setAssignmentRules}
         enableCustomRules={enableCustomRules}
         onEnableRulesChange={setEnableCustomRules}
+        users={portalUsers}
+        onUsersChange={setPortalUsers}
+        roles={roles}
+        onRolesChange={setRoles}
       />
+      {isAddingProvider && (
+        <AddProviderModal
+          onClose={() => setIsAddingProvider(false)}
+          onSave={handleAddRegisteredProvider}
+        />
+      )}
     </div>
   );
 };
